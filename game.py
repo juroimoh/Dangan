@@ -106,7 +106,7 @@ class MainMenu:
     def run(self, dt):
         self.display.fill(MENU_BG_COLOR)
 
-        title_surf = title_font.render("DANGAN - MAIN MENU", True, FONT_COLOR)
+        title_surf = title_font.render("DANGAN", True, FONT_COLOR)
         self.display.blit(title_surf, (SCREEN_WIDTH // 2 - title_surf.get_width() // 2, 100))
 
         for i, option in enumerate(self.options):
@@ -268,7 +268,7 @@ class Level:
         for event in events:
             if event.type == py.KEYDOWN:
                 if event.key == py.K_ESCAPE:
-                    self.gameStateManager.set_state('main_menu')
+                    self.gameStateManager.set_state('level_select')
 
     def draw_player(self):
         self.display.blit(player_img, (self.player.x, self.player.y))
