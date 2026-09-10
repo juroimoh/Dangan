@@ -4,6 +4,7 @@ from pygame import mixer
 py.init()
 mixer.init()
 
+    # screen setup
 SCREEN_WIDTH, SCREEN_HEIGHT = 900, 600
 screen = py.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 py.display.set_caption('Dangan')
@@ -18,9 +19,11 @@ cover_idea_img = py.image.load("assets/dangan_cover_idea.png").convert_alpha()
 player_mask = py.mask.from_surface(player_img)
 player_bullet_mask = py.mask.from_surface(player_bullet_img)
 
+    # colors
 BACKGROUND_COLOR = (16, 15, 22)
 FONT_COLOR = (214, 255, 255)
 
+    # miscellaneous
 DEBUG = True
 BASE_SPEED = 250
 
@@ -41,6 +44,7 @@ class Game:
         global dt, previous_time
         flag = True
         while flag:
+            # self.clock.tick(30)
             dt = time.time() - previous_time
             previous_time = time.time()
 
@@ -95,7 +99,8 @@ class LevelOne:
     def run(self):
 
         if not self.music_started:
-            mixer.music.load("assets/Ready.mp3")
+            # mixer.music.load("assets/Ready.mp3")
+            mixer.music.load("assets/Skyrider.mp3")
             mixer.music.set_volume(0.2)
             mixer.music.play()
             self.music_started = True
@@ -159,8 +164,9 @@ class LevelOne:
         self.draw_player_bullets()
         self.draw_player()
 
-        self.display.blit(border_img, (0, 0))
+        self.display.blit(border_img, (0, 0))  # Keep this rendering last.
 
+        # \/ debug \/
         if DEBUG:
             debug_text = font.render(
                 f"debug:   x {self.player.x}   y {self.player.y}   |   {player_speed}, {len(self.player_bullets)}x3", True, FONT_COLOR)
@@ -174,6 +180,7 @@ class LevelOne:
             screen.blit(debug_left, (620, 60))
             debug_bottom = font.render(f"{self.player.bottom}", True, FONT_COLOR)
             screen.blit(debug_bottom, (660, 100))
+        # /\ end debug /\
 
         py.display.flip()
 
