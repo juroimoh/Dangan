@@ -1,4 +1,16 @@
 {
   "level_name": "Level 1",
-  "music": "assets/Skyrider.mp3"
+  "music": "assets/Skyrider.mp3",
+  "enemies": [
+    {
+      "x": 200,
+      "y": 100,
+      "hp": 100,
+      "loop_movement": true,
+      "movement": [
+        { "target_x": 480, "target_y": 100, "speed": 90 },
+        { "target_x": 80, "target_y": 100, "speed": 90 }
+      ]
+    }
+  ]
 }
