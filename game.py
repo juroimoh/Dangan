@@ -1,4 +1,4 @@
-import pygame as py, time, sys, csv, random
+import pygame as py, time, sys, json, random
 from pygame import mixer
 
 py.init()
@@ -36,7 +36,7 @@ class Game:
 
         self.gameStateManager = GameStateManager('menu')
         self.menu = Menu(self.screen, self.gameStateManager)
-        self.levelone = LevelOne(self.screen, self.gameStateManager)
+        self.levelone = Level(self.screen, self.gameStateManager, "levels/level1.json")
 
         self.states = {'menu': self.menu, 'levelone': self.levelone}
 
@@ -59,10 +59,16 @@ class Game:
             self.states[self.gameStateManager.get_state()].run()
             py.display.flip()
 
-class LevelOne:
-    def __init__(self, display, gameStateManager):
+class Level:
+    def __init__(self, display, gameStateManager, level_file):
         self.display = display
         self.gameStateManager = gameStateManager
+        self.level_file = level_file
+
+        with open(self.level_file, "r") as file:
+            self.level_data = json.load(file)
+
+        self.music_path = self.level_data["music"]
 
         self.player = py.Rect(290, 290, 14, 14)
         self.player_mask = player_mask
@@ -99,8 +105,7 @@ class LevelOne:
     def run(self):
 
         if not self.music_started:
-            # mixer.music.load("assets/Ready.mp3")
-            mixer.music.load("assets/Skyrider.mp3")
+            mixer.music.load(self.music_path)
             mixer.music.set_volume(0.2)
             mixer.music.play()
             self.music_started = True
