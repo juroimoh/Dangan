@@ -29,7 +29,7 @@ FONT_COLOR = (214, 255, 255)
 HIGHLIGHT_COLOR = (255, 215, 0)
 DISABLED_COLOR = (143, 122, 122)
 
-DEBUG = True
+DEBUG = False
 BASE_SPEED = 250
 
 previous_time = time.time()
@@ -188,7 +188,7 @@ class LevelSelect:
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_ref = level_ref
-        self.options = ["LEVEL 1", "LEVEL 2", "LEVEL 3", "ESC"]
+        self.options = ["LEVEL 1", "LEVEL 2", "LEVEL 3", "LEVEL 4", "LEVEL 5", "ESC"]
         self.selected_index = 0
 
         self.level_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 35)
@@ -205,7 +205,7 @@ class LevelSelect:
                 elif event.key in (py.K_SPACE, py.K_RETURN):
                     if self.selected_index == 0:
                         self.gameStateManager.set_state('levelone')
-                    elif self.selected_index == 3:
+                    elif self.selected_index == 5:
                         self.gameStateManager.set_state('main_menu')
 
     def run(self, dt):
@@ -214,7 +214,7 @@ class LevelSelect:
         self.display.blit(levels_bg_img, (0, 0))
         self.display.blit(levels_fg__img, (0, 0))
 
-        for i in range(3):
+        for i in range(5):
             option = self.options[i]
             is_selected = (i == self.selected_index)
             is_clickable = (i == 0)
@@ -229,8 +229,8 @@ class LevelSelect:
             opt_surf = self.level_font.render(text_str, True, color)
             self.display.blit(opt_surf, (200 - opt_surf.get_width() // 2, 230 + i * 50))
 
-        esc_option = self.options[3]
-        is_esc_selected = (self.selected_index == 3)
+        esc_option = self.options[5]
+        is_esc_selected = (self.selected_index == 5)
 
         if is_esc_selected:
             esc_text = f"<{esc_option}>"
