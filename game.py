@@ -42,6 +42,14 @@ class GameStateManager:
         self.menu_states = {'splash', 'main_menu', 'level_select', 'settings'}
         self.menu_music_path = "assets/audio/Crystal-Waver.ogg"
 
+        self.is_transitioning = False
+        self.fade_alpha = 0.0
+        self.fade_speed = 255 / 0.15
+        self.fade_mode = 'out'
+        self.target_state = None
+        self.fade_surface = py.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.fade_surface.fill((0, 0, 0))
+
     def register_states(self, states):
         self.states = states
         if self.currentState in self.menu_states:
@@ -58,6 +66,14 @@ class GameStateManager:
         return self.currentState
 
     def set_state(self, state):
+        if state == self.currentState or self.is_transitioning:
+            return
+        self.target_state = state
+        self.is_transitioning = True
+        self.fade_mode = 'out'
+        self.fade_alpha = 0.0
+
+    def _perform_state_change(self):
         prev_state = self.currentState
 
         if prev_state in self.states:
@@ -65,7 +81,7 @@ class GameStateManager:
             if hasattr(current_obj, 'on_exit'):
                 current_obj.on_exit()
 
-        self.currentState = state
+        self.currentState = self.target_state
 
         if self.currentState in self.menu_states:
             if prev_state not in self.menu_states or not mixer.music.get_busy():
@@ -77,6 +93,25 @@ class GameStateManager:
             new_obj = self.states[self.currentState]
             if hasattr(new_obj, 'on_enter'):
                 new_obj.on_enter()
+
+    def draw_transition(self, display, dt):
+        if not self.is_transitioning:
+            return
+
+        if self.fade_mode == 'out':
+            self.fade_alpha += self.fade_speed * dt
+            if self.fade_alpha >= 255:
+                self.fade_alpha = 255
+                self._perform_state_change()
+                self.fade_mode = 'in'
+        elif self.fade_mode == 'in':
+            self.fade_alpha -= self.fade_speed * dt
+            if self.fade_alpha <= 0:
+                self.fade_alpha = 0
+                self.is_transitioning = False
+
+        self.fade_surface.set_alpha(int(self.fade_alpha))
+        display.blit(self.fade_surface, (0, 0))
 
 
 class Splash:
@@ -104,7 +139,7 @@ class MainMenu:
         self.gameStateManager = gameStateManager
         self.options = ["LEVEL", "OPTION", "QUIT"]
         self.selected_index = 0
-        self.menu_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 40)
+        self.menu_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 45)
 
     def handle_input(self, events):
         for event in events:
@@ -132,15 +167,15 @@ class MainMenu:
         for i, option in enumerate(self.options):
             if i == self.selected_index:
                 text_str = f"<{option}>"
-                color = HIGHLIGHT_COLOR
+                color = 255, 238, 253
             else:
                 text_str = option
-                color = FONT_COLOR
+                color = 219, 203, 216
 
             opt_surf = self.menu_font.render(text_str, True, color)
 
             x_pos = center_x - (opt_surf.get_width() // 2)
-            y_pos = 415 + i * 60
+            y_pos = 410 + i * 60
 
             self.display.blit(opt_surf, (x_pos, y_pos))
 
@@ -437,13 +472,17 @@ class Game:
             current_state_key = self.gameStateManager.get_state()
             current_state_obj = self.states[current_state_key]
 
-            if hasattr(current_state_obj, 'handle_input'):
-                current_state_obj.handle_input(events)
+            if not self.gameStateManager.is_transitioning:
+                if hasattr(current_state_obj, 'handle_input'):
+                    current_state_obj.handle_input(events)
 
             current_state_key = self.gameStateManager.get_state()
             current_state_obj = self.states[current_state_key]
 
-            current_state_obj.run(dt)
+            run_dt = 0 if self.gameStateManager.is_transitioning else dt
+            current_state_obj.run(run_dt)
+
+            self.gameStateManager.draw_transition(self.screen, dt)
 
             py.display.flip()
 
