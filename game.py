@@ -15,14 +15,15 @@ title_font = py.font.SysFont("Arial", 42, bold=True)
 border_img = py.image.load("assets/gamebackground.png").convert_alpha()
 player_img = py.image.load("assets/player.png").convert_alpha()
 player_bullet_img = py.image.load("assets/player_bullet.png").convert_alpha()
-cover_idea_img = py.image.load("assets/dangan_cover_idea.png").convert_alpha()
+cover_img = py.image.load("assets/dangan1_cover.png").convert_alpha()
+levels_bg_img = py.image.load("assets/dangan1_levels_behind.png").convert_alpha()
+levels_fg__img = py.image.load("assets/dangan1_levels_front.png").convert_alpha()
 
 player_mask = py.mask.from_surface(player_img)
 player_bullet_mask = py.mask.from_surface(player_bullet_img)
 
 # colors
 BACKGROUND_COLOR = (16, 15, 22)
-MENU_BG_COLOR = (24, 22, 34)
 FONT_COLOR = (214, 255, 255)
 HIGHLIGHT_COLOR = (255, 215, 0)
 DISABLED_COLOR = (100, 100, 110)
@@ -77,7 +78,7 @@ class Splash:
         self.timer += dt
         if self.timer >= 3.0:
             self.gameStateManager.set_state('main_menu')
-        self.display.blit(cover_idea_img, (0, 0))
+        self.display.blit(cover_img, (0, 0))
 
 
 class MainMenu:
@@ -104,10 +105,9 @@ class MainMenu:
                         sys.exit()
 
     def run(self, dt):
-        self.display.fill(MENU_BG_COLOR)
+        self.display.fill(BACKGROUND_COLOR)
 
-        title_surf = title_font.render("DANGAN", True, FONT_COLOR)
-        self.display.blit(title_surf, (SCREEN_WIDTH // 2 - title_surf.get_width() // 2, 100))
+        self.display.blit(cover_img, (0, 0))
 
         for i, option in enumerate(self.options):
             if i == self.selected_index:
@@ -143,10 +143,10 @@ class LevelSelect:
                         self.gameStateManager.set_state('levelone')
 
     def run(self, dt):
-        self.display.fill(MENU_BG_COLOR)
+        self.display.fill(BACKGROUND_COLOR)
 
-        title_surf = title_font.render("SELECT LEVEL", True, FONT_COLOR)
-        self.display.blit(title_surf, (SCREEN_WIDTH // 2 - title_surf.get_width() // 2, 100))
+        self.display.blit(levels_bg_img, (0, 0))
+        self.display.blit(levels_fg__img, (0, 0))
 
         for i, option in enumerate(self.options):
             is_selected = (i == self.selected_index)
@@ -198,7 +198,7 @@ class Settings:
                         self.sfx_volume = min(100, self.sfx_volume + 5)
 
     def run(self, dt):
-        self.display.fill(MENU_BG_COLOR)
+        self.display.fill(BACKGROUND_COLOR)
 
         title_surf = title_font.render("SETTINGS", True, FONT_COLOR)
         self.display.blit(title_surf, (SCREEN_WIDTH // 2 - title_surf.get_width() // 2, 100))
@@ -372,7 +372,7 @@ class Menu:
         self.gameStateManager = gameStateManager
 
     def run(self, dt):
-        self.display.blit(cover_idea_img, (0, 0))
+        self.display.blit(cover_img, (0, 0))
 
 
 class Game:
