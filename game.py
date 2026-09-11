@@ -17,7 +17,8 @@ player_img = py.image.load("assets/player.png").convert_alpha()
 player_bullet_img = py.image.load("assets/player_bullet.png").convert_alpha()
 cover_img = py.image.load("assets/dangan1_cover.png").convert_alpha()
 levels_bg_img = py.image.load("assets/dangan1_levels_behind.png").convert_alpha()
-levels_fg__img = py.image.load("assets/dangan1_levels_front.png").convert_alpha()
+levels_fg_img = py.image.load("assets/dangan1_levels_front.png").convert_alpha()
+options_img = py.image.load("assets/dangan_options.png").convert_alpha()
 
 player_mask = py.mask.from_surface(player_img)
 player_bullet_mask = py.mask.from_surface(player_bullet_img)
@@ -141,9 +142,12 @@ class MainMenu:
     def __init__(self, display, gameStateManager):
         self.display = display
         self.gameStateManager = gameStateManager
-        self.options = ["LEVEL", "OPTION", "QUIT"]
+        self.options = ["LEVEL", "OPTIONS", "QUIT"]
         self.selected_index = 0
         self.menu_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 45)
+
+    def on_enter(self):
+        self.selected_index = 0
 
     def handle_input(self, events):
         for event in events:
@@ -188,10 +192,14 @@ class LevelSelect:
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_ref = level_ref
-        self.options = ["LEVEL 1", "LEVEL 2", "LEVEL 3", "LEVEL 4", "LEVEL 5", "ESC"]
+        self.options = ["LEVEL 1", "LEVEL 2", "LEVEL 3", "LEVEL 4", "LEVEL 5", "BACK"]
         self.selected_index = 0
 
         self.level_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 35)
+        self.esc_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
+
+    def on_enter(self):
+        self.selected_index = 0
 
     def handle_input(self, events):
         for event in events:
@@ -212,7 +220,7 @@ class LevelSelect:
         self.display.fill(BACKGROUND_COLOR)
 
         self.display.blit(levels_bg_img, (0, 0))
-        self.display.blit(levels_fg__img, (0, 0))
+        self.display.blit(levels_fg_img, (0, 0))
 
         for i in range(5):
             option = self.options[i]
@@ -239,21 +247,27 @@ class LevelSelect:
             esc_text = esc_option
             esc_color = (229, 207, 207)
 
-        esc_surf = self.level_font.render(esc_text, True, esc_color)
+        esc_surf = self.esc_font.render(esc_text, True, esc_color)
 
         esc_x = 81 - esc_surf.get_width() // 2
-        esc_y = 541
+        esc_y = 546
         self.display.blit(esc_surf, (esc_x, esc_y))
 
 class Settings:
     def __init__(self, display, gameStateManager):
         self.display = display
         self.gameStateManager = gameStateManager
-        self.options = ["MUSIC", "EFFECTS", "ESC"]
+        self.options = ["MUSIC", "EFFECTS", "BACK"]
         self.selected_index = 0
         self.music_volume = 20
         self.sfx_volume = 50
         mixer.music.set_volume(self.music_volume / 100.0)
+
+        self.options_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 40)
+        self.esc_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
+
+    def on_enter(self):
+        self.selected_index = 0
 
     def handle_input(self, events):
         for event in events:
@@ -283,38 +297,51 @@ class Settings:
     def run(self, dt):
         self.display.fill(BACKGROUND_COLOR)
 
-        title_surf = title_font.render("SETTINGS", True, FONT_COLOR)
-        self.display.blit(title_surf, (SCREEN_WIDTH // 2 - title_surf.get_width() // 2, 100))
+        self.display.blit(options_img, (0, 0))
 
         volume_options = [
-            f"MUSIC:    {self.music_volume}% ",
-            f"EFFECTS:    {self.sfx_volume}% "
+            ("MUSIC", self.music_volume),
+            ("EFFECTS", self.sfx_volume)
         ]
 
-        for i, option in enumerate(volume_options):
+        for i, (label, vol) in enumerate(volume_options):
+            formatted_text = f"{label + ':':<10}{vol:>3}%" # All credit to Gemini for figuring this out.
+
             if i == self.selected_index:
-                text_str = f"> {option} <"
-                color = HIGHLIGHT_COLOR
+                text_str = f"<{formatted_text}>"
+                color = (255, 255, 255)
             else:
-                text_str = option
+                text_str = f" {formatted_text} "
                 color = FONT_COLOR
 
-            opt_surf = font.render(text_str, True, color)
-            self.display.blit(opt_surf, (SCREEN_WIDTH // 2 - opt_surf.get_width() // 2, 230 + i * 60))
+            opt_surf = self.options_font.render(text_str, True, color)
+            self.display.blit(opt_surf, (464, 230 + i * 60))
 
         esc_option = self.options[2]
         is_esc_selected = (self.selected_index == 2)
 
         if is_esc_selected:
-            esc_text = f"< {esc_option} >"
-            esc_color = HIGHLIGHT_COLOR
+            esc_text = f"<{esc_option}>"
+            esc_color = (255, 255, 255)
         else:
             esc_text = esc_option
             esc_color = FONT_COLOR
 
-        esc_surf = font.render(esc_text, True, esc_color)
-        esc_x = SCREEN_WIDTH // 2 - esc_surf.get_width() // 2
-        esc_y = 450
+        esc_surf = self.esc_font.render(esc_text, True, esc_color)
+        esc_x = 81 - esc_surf.get_width() // 2
+        esc_y = 546
+        self.display.blit(esc_surf, (esc_x, esc_y))
+
+        if is_esc_selected:
+            esc_text = f"<{esc_option}>"
+            esc_color = (255, 255, 255)
+        else:
+            esc_text = esc_option
+            esc_color = FONT_COLOR
+
+        esc_surf = self.esc_font.render(esc_text, True, esc_color)
+        esc_x = 81 - esc_surf.get_width() // 2
+        esc_y = 546
         self.display.blit(esc_surf, (esc_x, esc_y))
 
 
