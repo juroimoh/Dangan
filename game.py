@@ -21,20 +21,20 @@ levels_fg__img = py.image.load("assets/dangan1_levels_front.png").convert_alpha(
 
 player_mask = py.mask.from_surface(player_img)
 player_bullet_mask = py.mask.from_surface(player_bullet_img)
+py.key.set_repeat(250, 50)
 
 # colors
 BACKGROUND_COLOR = (16, 15, 22)
 FONT_COLOR = (214, 255, 255)
 HIGHLIGHT_COLOR = (255, 215, 0)
-DISABLED_COLOR = (100, 100, 110)
+DISABLED_COLOR = (143, 122, 122)
 
-# miscellaneous
 DEBUG = True
 BASE_SPEED = 250
 
 previous_time = time.time()
 
-
+# logic
 class GameStateManager:
     def __init__(self, currentState):
         self.currentState = currentState
@@ -42,10 +42,10 @@ class GameStateManager:
         self.menu_states = {'splash', 'main_menu', 'level_select', 'settings'}
         self.menu_music_path = "assets/audio/Crystal-Waver.ogg"
 
-        self.is_transitioning = False
-        self.fade_alpha = 0.0
+        self.is_transitioning = True
+        self.fade_alpha = 255.0
         self.fade_speed = 255 / 0.15
-        self.fade_mode = 'out'
+        self.fade_mode = 'in'
         self.target_state = None
         self.fade_surface = py.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.fade_surface.fill((0, 0, 0))
@@ -74,6 +74,10 @@ class GameStateManager:
         self.fade_alpha = 0.0
 
     def _perform_state_change(self):
+        if self.target_state == 'quit':
+            py.quit()
+            sys.exit()
+
         prev_state = self.currentState
 
         if prev_state in self.states:
@@ -154,8 +158,7 @@ class MainMenu:
                     elif self.selected_index == 1:
                         self.gameStateManager.set_state('settings')
                     elif self.selected_index == 2:
-                        py.quit()
-                        sys.exit()
+                        self.gameStateManager.set_state('quit')
 
     def run(self, dt):
         self.display.fill(BACKGROUND_COLOR)
@@ -185,8 +188,10 @@ class LevelSelect:
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_ref = level_ref
-        self.options = ["LEVEL 1", "LEVEL 2", "LEVEL 3"]
+        self.options = ["LEVEL 1", "LEVEL 2", "LEVEL 3", "ESC"]
         self.selected_index = 0
+
+        self.level_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 35)
 
     def handle_input(self, events):
         for event in events:
@@ -200,6 +205,8 @@ class LevelSelect:
                 elif event.key in (py.K_SPACE, py.K_RETURN):
                     if self.selected_index == 0:
                         self.gameStateManager.set_state('levelone')
+                    elif self.selected_index == 3:
+                        self.gameStateManager.set_state('main_menu')
 
     def run(self, dt):
         self.display.fill(BACKGROUND_COLOR)
@@ -207,28 +214,42 @@ class LevelSelect:
         self.display.blit(levels_bg_img, (0, 0))
         self.display.blit(levels_fg__img, (0, 0))
 
-        for i, option in enumerate(self.options):
+        for i in range(3):
+            option = self.options[i]
             is_selected = (i == self.selected_index)
             is_clickable = (i == 0)
 
             if is_selected:
-                text_str = f"< {option} >"
-                color = HIGHLIGHT_COLOR
+                text_str = f"<{option}>"
+                color = (255, 250, 246) if is_clickable else (178, 152, 152)
             else:
                 text_str = option
-                color = FONT_COLOR if is_clickable else DISABLED_COLOR
+                color = (229, 207, 207) if is_clickable else DISABLED_COLOR
 
-            opt_surf = font.render(text_str, True, color)
-            self.display.blit(opt_surf, (SCREEN_WIDTH // 2 - opt_surf.get_width() // 2, 230 + i * 50))
+            opt_surf = self.level_font.render(text_str, True, color)
+            self.display.blit(opt_surf, (200 - opt_surf.get_width() // 2, 230 + i * 50))
 
-        info_surf = font.render("Press ESC to return to Main Menu", True, FONT_COLOR)
-        self.display.blit(info_surf, (SCREEN_WIDTH // 2 - info_surf.get_width() // 2, 480))
+        esc_option = self.options[3]
+        is_esc_selected = (self.selected_index == 3)
 
+        if is_esc_selected:
+            esc_text = f"<{esc_option}>"
+            esc_color = (255, 250, 246)
+        else:
+            esc_text = esc_option
+            esc_color = (229, 207, 207)
+
+        esc_surf = self.level_font.render(esc_text, True, esc_color)
+
+        esc_x = 81 - esc_surf.get_width() // 2
+        esc_y = 541
+        self.display.blit(esc_surf, (esc_x, esc_y))
 
 class Settings:
     def __init__(self, display, gameStateManager):
         self.display = display
         self.gameStateManager = gameStateManager
+        self.options = ["MUSIC", "EFFECTS", "ESC"]
         self.selected_index = 0
         self.music_volume = 20
         self.sfx_volume = 50
@@ -238,11 +259,14 @@ class Settings:
         for event in events:
             if event.type == py.KEYDOWN:
                 if event.key == py.K_UP:
-                    self.selected_index = (self.selected_index - 1) % 2
+                    self.selected_index = (self.selected_index - 1) % len(self.options)
                 elif event.key == py.K_DOWN:
-                    self.selected_index = (self.selected_index + 1) % 2
+                    self.selected_index = (self.selected_index + 1) % len(self.options)
                 elif event.key == py.K_ESCAPE:
                     self.gameStateManager.set_state('main_menu')
+                elif event.key in (py.K_SPACE, py.K_RETURN):
+                    if self.selected_index == 2:
+                        self.gameStateManager.set_state('main_menu')
                 elif event.key == py.K_LEFT:
                     if self.selected_index == 0:
                         self.music_volume = max(0, self.music_volume - 5)
@@ -262,12 +286,12 @@ class Settings:
         title_surf = title_font.render("SETTINGS", True, FONT_COLOR)
         self.display.blit(title_surf, (SCREEN_WIDTH // 2 - title_surf.get_width() // 2, 100))
 
-        options = [
+        volume_options = [
             f"MUSIC:    {self.music_volume}% ",
             f"EFFECTS:    {self.sfx_volume}% "
         ]
 
-        for i, option in enumerate(options):
+        for i, option in enumerate(volume_options):
             if i == self.selected_index:
                 text_str = f"> {option} <"
                 color = HIGHLIGHT_COLOR
@@ -276,10 +300,22 @@ class Settings:
                 color = FONT_COLOR
 
             opt_surf = font.render(text_str, True, color)
-            self.display.blit(opt_surf, (SCREEN_WIDTH // 2 - opt_surf.get_width() // 2, 250 + i * 60))
+            self.display.blit(opt_surf, (SCREEN_WIDTH // 2 - opt_surf.get_width() // 2, 230 + i * 60))
 
-        info_surf = font.render("Use LEFT/RIGHT arrows to adjust | Press ESC to return", True, FONT_COLOR)
-        self.display.blit(info_surf, (SCREEN_WIDTH // 2 - info_surf.get_width() // 2, 480))
+        esc_option = self.options[2]
+        is_esc_selected = (self.selected_index == 2)
+
+        if is_esc_selected:
+            esc_text = f"< {esc_option} >"
+            esc_color = HIGHLIGHT_COLOR
+        else:
+            esc_text = esc_option
+            esc_color = FONT_COLOR
+
+        esc_surf = font.render(esc_text, True, esc_color)
+        esc_x = SCREEN_WIDTH // 2 - esc_surf.get_width() // 2
+        esc_y = 450
+        self.display.blit(esc_surf, (esc_x, esc_y))
 
 
 class Level:
@@ -407,9 +443,8 @@ class Level:
         self.draw_player_bullets()
         self.draw_player()
 
-        self.display.blit(border_img, (0, 0))  # Keep this rendering last.
+        self.display.blit(border_img, (0, 0)) # Keep this rendering last.
 
-        # debug
         if DEBUG:
             debug_text = font.render(
                 f"debug:   x {self.player.x}   y {self.player.y}   |   {self.player_speed}, {len(self.player_bullets)}x3", True, FONT_COLOR)
