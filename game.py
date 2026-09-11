@@ -305,7 +305,7 @@ class Settings:
         ]
 
         for i, (label, vol) in enumerate(volume_options):
-            formatted_text = f"{label + ':':<10}{vol:>3}%" # All credit to Gemini for figuring this out.
+            formatted_text = f"{label + ':':<9}{vol:>3}%" # All credit to Gemini for figuring this out.
 
             if i == self.selected_index:
                 text_str = f"<{formatted_text}>"
@@ -315,7 +315,7 @@ class Settings:
                 color = FONT_COLOR
 
             opt_surf = self.options_font.render(text_str, True, color)
-            self.display.blit(opt_surf, (464, 230 + i * 60))
+            self.display.blit(opt_surf, (472, 230 + i * 60))
 
         esc_option = self.options[2]
         is_esc_selected = (self.selected_index == 2)
