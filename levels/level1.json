@@ -1,6 +1,6 @@
 {
   "level_name": "Level 1",
-  "music": "assets/audio/Skyrider.mp3",
+  "music": "assets/audio/Skyrider.ogg",
   "enemies": [
     {
       "x": 200,

@@ -39,22 +39,39 @@ class GameStateManager:
     def __init__(self, currentState):
         self.currentState = currentState
         self.states = {}
+        self.menu_states = {'splash', 'main_menu', 'level_select', 'settings'}
+        self.menu_music_path = "assets/audio/Crystal-Waver.ogg"
 
     def register_states(self, states):
         self.states = states
+        if self.currentState in self.menu_states:
+            self.play_menu_music()
+
+    def play_menu_music(self):
+        try:
+            mixer.music.load(self.menu_music_path)
+            mixer.music.play(-1)
+        except py.error as e:
+            print(f"Could not load menu music: {e}")
 
     def get_state(self):
         return self.currentState
 
     def set_state(self, state):
-        if self.currentState in self.states:
-            current_obj = self.states[self.currentState]
+        prev_state = self.currentState
+
+        if prev_state in self.states:
+            current_obj = self.states[prev_state]
             if hasattr(current_obj, 'on_exit'):
                 current_obj.on_exit()
 
-        mixer.music.stop()
-
         self.currentState = state
+
+        if self.currentState in self.menu_states:
+            if prev_state not in self.menu_states or not mixer.music.get_busy():
+                self.play_menu_music()
+        else:
+            mixer.music.stop()
 
         if self.currentState in self.states:
             new_obj = self.states[self.currentState]
@@ -85,8 +102,9 @@ class MainMenu:
     def __init__(self, display, gameStateManager):
         self.display = display
         self.gameStateManager = gameStateManager
-        self.options = ["Level Select", "Settings", "Exit"]
+        self.options = ["LEVEL", "OPTION", "QUIT"]
         self.selected_index = 0
+        self.menu_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 40)
 
     def handle_input(self, events):
         for event in events:
@@ -109,16 +127,22 @@ class MainMenu:
 
         self.display.blit(cover_img, (0, 0))
 
+        center_x = 750
+
         for i, option in enumerate(self.options):
             if i == self.selected_index:
-                text_str = f"> {option} <"
+                text_str = f"<{option}>"
                 color = HIGHLIGHT_COLOR
             else:
                 text_str = option
                 color = FONT_COLOR
 
-            opt_surf = font.render(text_str, True, color)
-            self.display.blit(opt_surf, (SCREEN_WIDTH // 2 - opt_surf.get_width() // 2, 250 + i * 50))
+            opt_surf = self.menu_font.render(text_str, True, color)
+
+            x_pos = center_x - (opt_surf.get_width() // 2)
+            y_pos = 415 + i * 60
+
+            self.display.blit(opt_surf, (x_pos, y_pos))
 
 
 class LevelSelect:
@@ -126,7 +150,7 @@ class LevelSelect:
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_ref = level_ref
-        self.options = ["Level 1", "Level 2", "Level 3"]
+        self.options = ["LEVEL 1", "LEVEL 2", "LEVEL 3"]
         self.selected_index = 0
 
     def handle_input(self, events):
@@ -153,7 +177,7 @@ class LevelSelect:
             is_clickable = (i == 0)
 
             if is_selected:
-                text_str = f"> {option} <"
+                text_str = f"< {option} >"
                 color = HIGHLIGHT_COLOR
             else:
                 text_str = option
@@ -204,8 +228,8 @@ class Settings:
         self.display.blit(title_surf, (SCREEN_WIDTH // 2 - title_surf.get_width() // 2, 100))
 
         options = [
-            f"Music Volume:    {self.music_volume}% ",
-            f"SFX Volume:      {self.sfx_volume}% "
+            f"MUSIC:    {self.music_volume}% ",
+            f"EFFECTS:    {self.sfx_volume}% "
         ]
 
         for i, option in enumerate(options):
