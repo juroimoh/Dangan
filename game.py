@@ -9,8 +9,8 @@ SCREEN_WIDTH, SCREEN_HEIGHT = 900, 600
 screen = py.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 py.display.set_caption('Dangan')
 
-font = py.font.SysFont("Arial", 28)
-title_font = py.font.SysFont("Arial", 42, bold=True)
+font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 28)
+title_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 42)
 
 border_img = py.image.load("assets/gamebackground.png").convert_alpha()
 player_img = py.image.load("assets/player.png").convert_alpha()
@@ -126,7 +126,7 @@ class LevelSelect:
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_ref = level_ref
-        self.options = ["Level 1", "Level 2 (Locked)", "Level 3 (Locked)"]
+        self.options = ["Level 1", "Level 2", "Level 3"]
         self.selected_index = 0
 
     def handle_input(self, events):
