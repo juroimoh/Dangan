@@ -118,7 +118,6 @@ class GameStateManager:
         self.fade_surface.set_alpha(int(self.fade_alpha))
         display.blit(self.fade_surface, (0, 0))
 
-
 class Splash:
     def __init__(self, display, gameStateManager):
         self.display = display
@@ -136,7 +135,6 @@ class Splash:
         if self.timer >= 3.0:
             self.gameStateManager.set_state('main_menu')
         self.display.blit(cover_img, (0, 0))
-
 
 class MainMenu:
     def __init__(self, display, gameStateManager):
@@ -169,23 +167,22 @@ class MainMenu:
 
         self.display.blit(cover_img, (0, 0))
 
-        center_x = 750
+        right_x = 840
 
         for i, option in enumerate(self.options):
             if i == self.selected_index:
                 text_str = f"<{option}>"
                 color = 255, 238, 253
             else:
-                text_str = option
+                text_str = f" {option} "
                 color = 219, 203, 216
 
             opt_surf = self.menu_font.render(text_str, True, color)
 
-            x_pos = center_x - (opt_surf.get_width() // 2)
+            x_pos = right_x - opt_surf.get_width()
             y_pos = 410 + i * 60
 
             self.display.blit(opt_surf, (x_pos, y_pos))
-
 
 class LevelSelect:
     def __init__(self, display, gameStateManager, level_ref):
@@ -344,7 +341,6 @@ class Settings:
         esc_y = 546
         self.display.blit(esc_surf, (esc_x, esc_y))
 
-
 class Level:
     def __init__(self, display, gameStateManager, level_file, settings_ref):
         self.display = display
@@ -486,7 +482,6 @@ class Level:
             debug_bottom = font.render(f"{self.player.bottom}", True, FONT_COLOR)
             screen.blit(debug_bottom, (660, 100))
 
-
 class Menu:
     def __init__(self, display, gameStateManager):
         self.display = display
@@ -494,7 +489,6 @@ class Menu:
 
     def run(self, dt):
         self.display.blit(cover_img, (0, 0))
-
 
 class Game:
     def __init__(self):
@@ -547,7 +541,6 @@ class Game:
             self.gameStateManager.draw_transition(self.screen, dt)
 
             py.display.flip()
-
 
 if __name__ == '__main__':
     game = Game()
