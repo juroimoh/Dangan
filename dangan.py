@@ -1,4 +1,4 @@
-import pygame as py, time, sys, json, math, random
+import pygame as py, time, sys, json, math
 from pygame import mixer
 
 py.init()
@@ -20,6 +20,10 @@ levels_bg_img = py.image.load("assets/dangan1_levels_behind.png").convert_alpha(
 levels_fg_img = py.image.load("assets/dangan1_levels_front.png").convert_alpha()
 options_img = py.image.load("assets/dangan_options.png").convert_alpha()
 enemy_img = py.image.load("assets/sherumini.png").convert_alpha()
+spinningblade_img = py.image.load("assets/spinningblade.png").convert_alpha()
+spinningblade_gray_img = py.transform.grayscale(spinningblade_img)
+spinningblade_red_img = spinningblade_img.copy()
+spinningblade_red_img.fill((255, 60, 60, 255), special_flags=py.BLEND_RGBA_MULT)
 
 player_mask = py.mask.from_surface(player_img)
 player_bullet_mask = py.mask.from_surface(player_bullet_img)
@@ -42,6 +46,7 @@ BASE_SPEED = 250
 HIT_TIMEOUT_DURATION = 2.0
 HIT_FADE_WINDOW = 0.4
 SURVIVAL_SCORE_RATE = 60.0
+SPINNING_BLADE_INACTIVE_ALPHA = 45
 
 previous_time = time.time()
 
@@ -279,7 +284,17 @@ class Settings:
                 elif event.key == py.K_DOWN:
                     self.selected_index = (self.selected_index + 1) % len(self.options)
                 elif event.key == py.K_SPACE:
-                    self.selected_index = (self.selected_index + 1) % len(self.options)
+                    if self.selected_index == 0:
+                        self.music_volume += 5
+                        if self.music_volume > 100:
+                            self.music_volume = 0
+                        mixer.music.set_volume(self.music_volume / 100.0)
+                    elif self.selected_index == 1:
+                        self.sfx_volume += 5
+                        if self.sfx_volume > 100:
+                            self.sfx_volume = 0
+                    elif self.selected_index == 2:
+                        self.gameStateManager.set_state('main_menu')
                 elif event.key == py.K_RETURN:
                     if self.selected_index == 2:
                         self.gameStateManager.set_state('main_menu')
@@ -358,7 +373,8 @@ class Level:
             "move_enemy_sine": self.action_move_enemy_sine,
             "move_enemy_path": self.action_move_enemy_path,
             "move_enemy_circle": self.action_move_enemy_circle,
-            "move_player": self.action_move_player
+            "move_player": self.action_move_player,
+            "spawn_spinning_blades": self.action_spawn_spinning_blades
         }
 
         self.reset_level()
@@ -388,6 +404,17 @@ class Level:
             sprite = event.get("sprite")
             if sprite:
                 self.get_bullet_sprite(sprite)
+
+    def _rotate_blade_image(self, image, pivot_pos, angle):
+        """Rotates image around its bottom-middle point instead of its center, keeping pivot_pos fixed on screen."""
+        origin_local = (image.get_width() / 2, image.get_height())
+        image_rect = image.get_rect(topleft=(pivot_pos[0] - origin_local[0], pivot_pos[1] - origin_local[1]))
+        offset_center_to_pivot = py.math.Vector2(pivot_pos) - image_rect.center
+        rotated_offset = offset_center_to_pivot.rotate(-angle)
+        rotated_center = (pivot_pos[0] - rotated_offset.x, pivot_pos[1] - rotated_offset.y)
+        rotated_image = py.transform.rotate(image, angle)
+        rotated_rect = rotated_image.get_rect(center=rotated_center)
+        return rotated_image, rotated_rect
 
 # action library
     def _fire_single_bullet(self, b_params):
@@ -553,6 +580,27 @@ class Level:
         self.player_x = float(self.player.x)
         self.player_y = float(self.player.y)
 
+    def action_spawn_spinning_blades(self, event):
+        switch_interval = event.get("switch_interval", 1.5)
+        self.spinning_blades.append({
+            "rotation": event.get("start_angle", 0.0),
+            "spin_speed": event.get("spin_speed", 60.0),
+            "spin_direction": event.get("spin_direction", 1),
+            "switch_interval": switch_interval,
+            "switch_timer": switch_interval,
+            "on": event.get("start_active", True),
+            "transition_elapsed": 0.0,
+            "fade_in_duration": event.get("fade_in_duration", 1.0),
+            "spawn_elapsed": 0.0,
+            "turn_on_duration": event.get("turn_on_duration", 0.5),
+            "turn_off_duration": event.get("turn_off_duration", 0.5),
+            "center_x": event.get("x", None),
+            "center_y": event.get("y", None),
+            "duration": event.get("duration", None),
+            "fade_out_duration": event.get("fade_out_duration", event.get("fade_in_duration", 1.0)),
+            "lifetime_elapsed": 0.0
+        })
+
     def on_enter(self):
         self.reset_level()
 
@@ -600,6 +648,7 @@ class Level:
 
         self.enemy_bullets = []
         self.active_spawners = []
+        self.spinning_blades = []
 
         self.enemy_movement_mode = "idle"
         self.enemy_move_elapsed = 0.0
@@ -662,7 +711,7 @@ class Level:
 
         self.score_accum += SURVIVAL_SCORE_RATE * dt
         tick_score = int(self.score_accum)
-        if tick_score > 0 and self.hit_timer <= 0:
+        if tick_score > 0:
             self.score += tick_score
             self.score_accum -= tick_score
 
@@ -770,6 +819,59 @@ class Level:
             self.player_bullet_reload -= 1 * dt
 
         screen.fill(BACKGROUND_COLOR)
+
+        for spinner in self.spinning_blades[:]:
+            spinner["rotation"] += spinner["spin_speed"] * spinner["spin_direction"] * dt
+            spinner["spawn_elapsed"] += dt
+            spinner["lifetime_elapsed"] += dt
+            spinner["transition_elapsed"] += dt
+
+            if spinner["duration"] is not None:
+                remaining = spinner["duration"] - spinner["lifetime_elapsed"]
+                if remaining <= 0:
+                    self.spinning_blades.remove(spinner)
+                    continue
+                fade_out_t = 1.0 if spinner["fade_out_duration"] <= 0 else min(1.0, remaining / spinner["fade_out_duration"])
+            else:
+                fade_out_t = 1.0
+
+            spinner["switch_timer"] -= dt
+            if spinner["switch_timer"] <= 0:
+                spinner["switch_timer"] += spinner["switch_interval"]
+                spinner["on"] = not spinner["on"]
+                spinner["transition_elapsed"] = 0.0
+
+            if spinner["center_x"] is not None:
+                blade_center_x = spinner["center_x"]
+            else:
+                blade_center_x = self.enemy_x + enemy_img.get_width() / 2
+            if spinner["center_y"] is not None:
+                blade_center_y = spinner["center_y"]
+            else:
+                blade_center_y = self.enemy_y + enemy_img.get_height() / 2
+
+            fade_in_t = 1.0 if spinner["fade_in_duration"] <= 0 else min(1.0, spinner["spawn_elapsed"] / spinner["fade_in_duration"])
+            visibility = fade_in_t * fade_out_t
+
+            transition_duration = spinner["turn_on_duration"] if spinner["on"] else spinner["turn_off_duration"]
+            transition_t = 1.0 if transition_duration <= 0 else min(1.0, spinner["transition_elapsed"] / transition_duration)
+            red_t = transition_t if spinner["on"] else (1.0 - transition_t)
+
+            blade_angle = spinner["rotation"]
+            blade_pivot = (blade_center_x, blade_center_y)
+
+            rotated_gray, gray_rect = self._rotate_blade_image(spinningblade_gray_img, blade_pivot, blade_angle)
+            rotated_gray.set_alpha(int((1.0 - red_t) * SPINNING_BLADE_INACTIVE_ALPHA * visibility))
+            screen.blit(rotated_gray, gray_rect)
+
+            rotated_red, red_rect = self._rotate_blade_image(spinningblade_red_img, blade_pivot, blade_angle)
+            rotated_red.set_alpha(int(red_t * 255 * visibility))
+            screen.blit(rotated_red, red_rect)
+
+            if red_t >= 1.0 and self.hit_timer <= 0:
+                blade_mask = py.mask.from_surface(rotated_red)
+                if self.player_mask.overlap(blade_mask, (red_rect.x - self.player.x, red_rect.y - self.player.y)):
+                    self.hit_timer = HIT_TIMEOUT_DURATION
 
         for b in self.player_bullets[:]:
             b[1] -= self.player_bullet_speed * dt
