@@ -1,16 +1,9 @@
 {
   "level_name": "Level 1",
   "music": "assets/audio/Skyrider.ogg",
-  "enemies": [
-    {
-      "x": 200,
-      "y": 100,
-      "hp": 100,
-      "loop_movement": true,
-      "movement": [
-        { "target_x": 480, "target_y": 100, "speed": 90 },
-        { "target_x": 80, "target_y": 100, "speed": 90 }
-      ]
-    }
-  ]
+  "events": [
+        {"time": 1.0, "type": "spawn", "x": 150, "y": -50, "vx": 0, "vy": 40, "hp": 5, "bullet_type": "straight", "shoot_cooldown": 1.5},
+        {"time": 3.5, "type": "spawn", "x": 400, "y": -50, "vx": -20, "vy": 30, "hp": 8, "bullet_type": "aimed", "shoot_cooldown": 2.0},
+        {"time": 6.0, "type": "spawn", "x": 275, "y": -50, "vx": 0, "vy": 20, "hp": 15, "bullet_type": "spread", "shoot_cooldown": 3.0}
+    ]
 }

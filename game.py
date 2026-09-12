@@ -19,9 +19,12 @@ cover_img = py.image.load("assets/dangan1_cover.png").convert_alpha()
 levels_bg_img = py.image.load("assets/dangan1_levels_behind.png").convert_alpha()
 levels_fg_img = py.image.load("assets/dangan1_levels_front.png").convert_alpha()
 options_img = py.image.load("assets/dangan_options.png").convert_alpha()
+enemy_img = py.image.load("assets/sherumini.png").convert_alpha()
 
 player_mask = py.mask.from_surface(player_img)
 player_bullet_mask = py.mask.from_surface(player_bullet_img)
+enemy_mask = py.mask.from_surface(enemy_img)
+
 py.key.set_repeat(250, 50)
 
 # colors
@@ -354,6 +357,9 @@ class Level:
         self.music_path = self.level_data["music"]
         self.reset_level()
 
+        self.title_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 30)
+        self.subtitle_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
+
     def on_enter(self):
         self.reset_level()
 
@@ -382,6 +388,10 @@ class Level:
         self.player_bullet_width = 6
         self.player_bullet_speed = 550
 
+        self.score = 0
+        self.enemy_x = float(self.level_data.get("enemy_x", 280))
+        self.enemy_y = float(self.level_data.get("enemy_y", 80))
+
     def handle_input(self, events):
         for event in events:
             if event.type == py.KEYDOWN:
@@ -390,6 +400,9 @@ class Level:
 
     def draw_player(self):
         self.display.blit(player_img, (self.player.x, self.player.y))
+
+    def draw_enemy(self):
+        self.display.blit(enemy_img, (self.enemy_x, self.enemy_y))
 
     def draw_player_bullets(self):
         for b in self.player_bullets:
@@ -450,23 +463,41 @@ class Level:
 
         for b in self.player_bullets[:]:
             b[1] -= self.player_bullet_speed * dt
+            if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
+                self.score += 1
+                self.player_bullets.remove(b)
+                continue
             if b[1] < 0:
                 self.player_bullets.remove(b)
         for b in self.player_bulletsl[:]:
             b[1] -= self.player_bullet_speed * dt
             b[0] -= self.player_bullet_speed / 10 * dt
+            if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
+                self.score += 1
+                self.player_bulletsl.remove(b)
+                continue
             if b[1] < 0:
                 self.player_bulletsl.remove(b)
         for b in self.player_bulletsr[:]:
             b[1] -= self.player_bullet_speed * dt
             b[0] += self.player_bullet_speed / 10 * dt
+            if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
+                self.score += 1
+                self.player_bulletsr.remove(b)
+                continue
             if b[1] < 0:
                 self.player_bulletsr.remove(b)
 
+        self.draw_enemy()
         self.draw_player_bullets()
         self.draw_player()
 
         self.display.blit(border_img, (0, 0)) # Keep this rendering last.
+
+        score_surf = self.title_font.render(f"SCORE:", True, FONT_COLOR)
+        screen.blit(score_surf, (585, 116))
+        score_surf_main = self.subtitle_font.render(f"{self.score:07d}", True, FONT_COLOR)
+        screen.blit(score_surf_main, (720, 120))
 
         if DEBUG:
             debug_text = font.render(
