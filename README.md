@@ -4,7 +4,7 @@
 
 (logo here)
 
-★★★★★ (0+)
+★★★★★ `(0+)`
 
 Three *evil* princesses have taken over the kingdom. Only you can stop them. Dodge their attacks, and defeat them all to restore peace in the kingdom.
 
