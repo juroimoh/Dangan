@@ -621,7 +621,7 @@ class Level:
         self.player_y = float(self.player.y)
         self.player_width = 14
 
-        self.graze_margin = 6
+        self.graze_margin = 9 # originally was 6
         self.graze_radius = int(math.hypot(self.player_width, self.player_width) / 2) + self.graze_margin
         graze_surf = py.Surface((self.graze_radius * 2, self.graze_radius * 2), py.SRCALPHA)
         py.draw.circle(graze_surf, (255, 255, 255), (self.graze_radius, self.graze_radius), self.graze_radius)
