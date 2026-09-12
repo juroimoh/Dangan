@@ -130,7 +130,7 @@
     {
       "time": 21.0,
       "type": "spawn_spread",
-      "sprite": "assets/basicbullet.png",
+      "sprite": "assets/bspike.png",
       "x": 300,
       "y": 100,
       "duration": 1.0
@@ -138,12 +138,12 @@
     {
       "time": 22.0,
       "type": "spawn_ring",
-      "sprite": "assets/basicbullet.png",
+      "sprite": "assets/bspike.png",
       "count": 16,
       "base_angle": 0,
       "movement_type": "homing",
-      "speed": 130,
-      "homing_rate": 75.0,
+      "speed": 400,
+      "homing_rate": 50.0,
       "repetitions": 4,
       "delay": 0.9
     },
@@ -159,7 +159,7 @@
     {
       "time": 27.5,
       "type": "spawn_ring",
-      "sprite": "assets/basicbullet.png",
+      "sprite": "assets/bspike.png",
       "count": 28,
       "base_angle": 0,
       "speed": 170,
@@ -169,7 +169,7 @@
     {
       "time": 28.0,
       "type": "spawn_spread",
-      "sprite": "assets/basicbullet.png",
+      "sprite": "assets/bspike.png",
       "count": 9,
       "spread_angle": 70,
       "base_angle": 90,
@@ -182,7 +182,7 @@
     {
       "time": 28.2,
       "type": "spawn_spread",
-      "sprite": "assets/basicbullet.png",
+      "sprite": "assets/bspike.png",
       "count": 9,
       "spread_angle": 70,
       "base_angle": 90,
@@ -195,7 +195,7 @@
     {
       "time": 29.0,
       "type": "spawn_bullet",
-      "sprite": "assets/basicbullet.png",
+      "sprite": "assets/bspike.png",
       "angle": 90,
       "movement_type": "zigzag",
       "zigzag_freq": 12.0,

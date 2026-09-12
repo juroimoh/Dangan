@@ -382,8 +382,8 @@ class Level:
 
 # action library
     def _fire_single_bullet(self, b_params):
-        x = b_params.get("x", self.enemy_x + 10)
-        y = b_params.get("y", self.enemy_y + 10)
+        x = b_params.get("x", self.enemy_x + enemy_img.get_width() / 2)
+        y = b_params.get("y", self.enemy_y + enemy_img.get_height() / 2)
         speed = b_params.get("speed", 200)
         angle = b_params.get("angle", 90) # Default 90 degrees = straight down
         radius = b_params.get("radius", 6)
@@ -444,8 +444,8 @@ class Level:
             self._fire_single_bullet(event)
 
     def _fire_spread_payload(self, event):
-        x = event.get("x", self.enemy_x + 10)
-        y = event.get("y", self.enemy_y + 10)
+        x = event.get("x", self.enemy_x + enemy_img.get_width() / 2)
+        y = event.get("y", self.enemy_y + enemy_img.get_height() / 2)
         count = event.get("count", 5)
         spread_angle = event.get("spread_angle", 60.0)
         base_angle = event.get("base_angle", 90.0)
@@ -480,8 +480,8 @@ class Level:
             self._fire_spread_payload(event)
 
     def _fire_ring_payload(self, event):
-        x = event.get("x", self.enemy_x + 10)
-        y = event.get("y", self.enemy_y + 10)
+        x = event.get("x", self.enemy_x + enemy_img.get_width() / 2)
+        y = event.get("y", self.enemy_y + enemy_img.get_height() / 2)
         count = event.get("count", 12)
         base_angle = event.get("base_angle", 0.0)
 
@@ -563,6 +563,12 @@ class Level:
         self.player_x = float(self.player.x)
         self.player_y = float(self.player.y)
         self.player_width = 14
+
+        self.graze_margin = 6
+        self.graze_radius = int(math.hypot(self.player_width, self.player_width) / 2) + self.graze_margin
+        graze_surf = py.Surface((self.graze_radius * 2, self.graze_radius * 2), py.SRCALPHA)
+        py.draw.circle(graze_surf, (255, 255, 255), (self.graze_radius, self.graze_radius), self.graze_radius)
+        self.graze_mask = py.mask.from_surface(graze_surf)
 
         self.player_bullets = []
         self.player_bulletsl = []
@@ -735,7 +741,7 @@ class Level:
         for b in self.player_bullets[:]:
             b[1] -= self.player_bullet_speed * dt
             if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
-                self.score += 1
+                self.score += 5
                 self.player_bullets.remove(b)
                 continue
             if b[1] < 0:
@@ -744,7 +750,7 @@ class Level:
             b[1] -= self.player_bullet_speed * dt
             b[0] -= self.player_bullet_speed / 10 * dt
             if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
-                self.score += 1
+                self.score += 5
                 self.player_bulletsl.remove(b)
                 continue
             if b[1] < 0:
@@ -753,7 +759,7 @@ class Level:
             b[1] -= self.player_bullet_speed * dt
             b[0] += self.player_bullet_speed / 10 * dt
             if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
-                self.score += 1
+                self.score += 5
                 self.player_bulletsr.remove(b)
                 continue
             if b[1] < 0:
@@ -818,6 +824,11 @@ class Level:
             if self.player_mask.overlap(b_mask, (offset_x, offset_y)):
                 # COLLISION LOGIC EMPTY -> no damage yet
                 pass
+            else:
+                graze_x = int(b["x"] - b["width"] / 2 - (self.player.x + self.player_width / 2 - self.graze_radius))
+                graze_y = int(b["y"] - b["height"] / 2 - (self.player.y + self.player_width / 2 - self.graze_radius))
+                if self.graze_mask.overlap(b_mask, (graze_x, graze_y)):
+                    self.score += 1
 
             half_w = b["width"] / 2
             half_h = b["height"] / 2
