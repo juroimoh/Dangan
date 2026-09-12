@@ -1,4 +1,4 @@
-import pygame as py, time, sys, json, random, math
+import pygame as py, time, sys, json, math
 from pygame import mixer
 
 py.init()
