@@ -30,7 +30,7 @@
       "time": 2.8,
       "type": "spawn_spread",
       "sprite": "assets/bubbleshot.png",
-      "count": 5,
+      "count": 1,
       "spread_angle": 60,
       "base_angle": 90,
       "speed": 200,
@@ -50,26 +50,26 @@
       "time": 5.5,
       "type": "spawn_spread",
       "sprite": "assets/bubbleshot.png",
-      "count": 7,
+      "count": 25,
       "spread_angle": 80,
       "base_angle": 90,
       "movement_type": "curved",
       "curve_rate": 35.0,
       "speed": 180,
-      "repetitions": 8,
-      "delay": 0.35
+      "repetitions": 2,
+      "delay": 1
     },
     {
       "time": 5.7,
       "type": "spawn_spread",
       "sprite": "assets/bubbleshot.png",
-      "count": 7,
+      "count": 20,
       "spread_angle": 80,
       "base_angle": 90,
       "movement_type": "curved",
       "curve_rate": -35.0,
       "speed": 180,
-      "repetitions": 8,
+      "repetitions": 3,
       "delay": 0.35
     },
     {
@@ -85,7 +85,7 @@
       "time": 10.5,
       "type": "spawn_ring",
       "sprite": "assets/bubbleshot.png",
-      "count": 20,
+      "count": 2,
       "base_angle": 0,
       "speed": 160,
       "repetitions": 6,
@@ -100,7 +100,7 @@
       "zigzag_freq": 10.0,
       "zigzag_amp": 180.0,
       "speed": 190,
-      "repetitions": 12,
+      "repetitions": 5,
       "delay": 0.25
     },
     {
@@ -160,7 +160,7 @@
       "time": 27.5,
       "type": "spawn_ring",
       "sprite": "assets/bspike.png",
-      "count": 28,
+      "count": 6,
       "base_angle": 0,
       "speed": 170,
       "repetitions": 12,
@@ -170,13 +170,13 @@
       "time": 28.0,
       "type": "spawn_spread",
       "sprite": "assets/bspike.png",
-      "count": 9,
+      "count": 2,
       "spread_angle": 70,
       "base_angle": 90,
       "movement_type": "curved",
       "curve_rate": 40.0,
       "speed": 180,
-      "repetitions": 15,
+      "repetitions": 8,
       "delay": 0.4
     },
     {
@@ -189,7 +189,7 @@
       "movement_type": "curved",
       "curve_rate": -40.0,
       "speed": 180,
-      "repetitions": 15,
+      "repetitions": 8,
       "delay": 0.4
     },
     {
@@ -201,8 +201,50 @@
       "zigzag_freq": 12.0,
       "zigzag_amp": 220.0,
       "speed": 210,
-      "repetitions": 18,
+      "repetitions": 9,
       "delay": 0.25
+    },
+    {
+      "time": 30.0,
+      "type": "spawn_spinning_blades",
+      "x": 300,
+      "y": 300,
+      "start_angle": 0,
+      "spin_speed": 30,
+      "spin_direction": 1,
+      "switch_interval": 1.2,
+      "turn_on_duration": 0.3,
+      "turn_off_duration": 0.3,
+      "start_active": true,
+      "fade_in_duration": 0.5,
+      "fade_out_duration": 0.5,
+      "duration": 8.0
+    },
+    {
+      "time": 30.0,
+      "type": "spawn_spinning_blades",
+      "x": 300,
+      "y": 300,
+      "start_angle": 180,
+      "spin_speed": 30,
+      "spin_direction": 1,
+      "switch_interval": 1.2,
+      "turn_on_duration": 0.3,
+      "turn_off_duration": 0.3,
+      "start_active": false,
+      "fade_in_duration": 0.5,
+      "fade_out_duration": 0.5,
+      "duration": 8.0
+    },
+    {
+      "time": 39,
+      "type": "spawn_spinning_blades",
+      "x": 300,
+      "y": 300,
+      "spin_speed": -110,
+      "spin_direction": -1,
+      "switch_interval": 0.9,
+      "duration": 8.0
     }
   ]
 }
