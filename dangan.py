@@ -1,4 +1,4 @@
-import pygame as py, time, sys, json, math
+import pygame as py, time, sys, json, math, random
 from pygame import mixer
 
 py.init()
@@ -25,6 +25,9 @@ player_mask = py.mask.from_surface(player_img)
 player_bullet_mask = py.mask.from_surface(player_bullet_img)
 enemy_mask = py.mask.from_surface(enemy_img)
 
+player_flash_img = player_img.copy()
+player_flash_img.fill((220, 90, 90, 255), special_flags=py.BLEND_RGBA_MULT)
+
 py.key.set_repeat(250, 50)
 
 # colors
@@ -35,6 +38,10 @@ DISABLED_COLOR = (143, 122, 122)
 
 DEBUG = False
 BASE_SPEED = 250
+
+HIT_TIMEOUT_DURATION = 2.0
+HIT_FADE_WINDOW = 0.4
+SURVIVAL_SCORE_RATE = 60.0
 
 previous_time = time.time()
 
@@ -271,11 +278,13 @@ class Settings:
                     self.selected_index = (self.selected_index - 1) % len(self.options)
                 elif event.key == py.K_DOWN:
                     self.selected_index = (self.selected_index + 1) % len(self.options)
-                elif event.key == py.K_ESCAPE:
-                    self.gameStateManager.set_state('main_menu')
-                elif event.key in (py.K_SPACE, py.K_RETURN):
+                elif event.key == py.K_SPACE:
+                    self.selected_index = (self.selected_index + 1) % len(self.options)
+                elif event.key == py.K_RETURN:
                     if self.selected_index == 2:
                         self.gameStateManager.set_state('main_menu')
+                elif event.key == py.K_ESCAPE:
+                    self.gameStateManager.set_state('main_menu')
                 elif event.key == py.K_LEFT:
                     if self.selected_index == 0:
                         self.music_volume = max(0, self.music_volume - 5)
@@ -579,6 +588,8 @@ class Level:
         self.player_bullet_speed = 550
 
         self.score = 0
+        self.score_accum = 0.0
+        self.graze_score = 0
         self.enemy_x = float(self.level_data.get("enemy_x", 280))
         self.enemy_y = float(self.level_data.get("enemy_y", 80))
 
@@ -603,6 +614,8 @@ class Level:
         self.circle_radius = 80.0
         self.circle_speed = 90.0
 
+        self.hit_timer = 0.0
+
     def handle_input(self, events):
         for event in events:
             if event.type == py.KEYDOWN:
@@ -611,6 +624,10 @@ class Level:
 
     def draw_player(self):
         self.display.blit(player_img, (self.player.x, self.player.y))
+        intensity = self._hit_flash_intensity()
+        if intensity > 0:
+            player_flash_img.set_alpha(int(255 * intensity))
+            self.display.blit(player_flash_img, (self.player.x, self.player.y))
 
     def draw_enemy(self):
         self.display.blit(enemy_img, (self.enemy_x, self.enemy_y))
@@ -623,6 +640,13 @@ class Level:
         for b in self.player_bulletsr:
             screen.blit(player_bullet_img, (b[0], b[1]))
 
+    def _hit_flash_intensity(self):
+        if self.hit_timer <= 0:
+            return 0.0
+        if self.hit_timer > HIT_FADE_WINDOW:
+            return 1.0
+        return self.hit_timer / HIT_FADE_WINDOW
+
     def run(self, dt):
         if not self.music_started:
             mixer.music.load(self.music_path)
@@ -632,6 +656,15 @@ class Level:
 
         if self.music_started:
             self.level_time += dt
+
+        if self.hit_timer > 0:
+            self.hit_timer = max(0.0, self.hit_timer - dt)
+
+        self.score_accum += SURVIVAL_SCORE_RATE * dt
+        tick_score = int(self.score_accum)
+        if tick_score > 0 and self.hit_timer <= 0:
+            self.score += tick_score
+            self.score_accum -= tick_score
 
         for spawner in self.active_spawners[:]:
             spawner["timer"] -= dt
@@ -725,7 +758,7 @@ class Level:
             if self.player.bottom > 550:
                 self.player.y = 550 - self.player_width
 
-        if keys[py.K_SPACE] and self.player_bullet_reload <= 0:
+        if keys[py.K_SPACE] and self.player_bullet_reload <= 0 and self.hit_timer <= 0:
             self.player_bullet_reload = 0.15
             player_bullet_x = self.player.x + self.player_width / 2 - self.player_bullet_width / 2
             player_bullet_y = self.player.y - 5
@@ -741,7 +774,7 @@ class Level:
         for b in self.player_bullets[:]:
             b[1] -= self.player_bullet_speed * dt
             if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
-                self.score += 7
+                self.score += 100
                 self.player_bullets.remove(b)
                 continue
             if b[1] < 0:
@@ -750,7 +783,7 @@ class Level:
             b[1] -= self.player_bullet_speed * dt
             b[0] -= self.player_bullet_speed / 10 * dt
             if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
-                self.score += 7
+                self.score += 100
                 self.player_bulletsl.remove(b)
                 continue
             if b[1] < 0:
@@ -759,7 +792,7 @@ class Level:
             b[1] -= self.player_bullet_speed * dt
             b[0] += self.player_bullet_speed / 10 * dt
             if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
-                self.score += 7
+                self.score += 100
                 self.player_bulletsr.remove(b)
                 continue
             if b[1] < 0:
@@ -821,19 +854,25 @@ class Level:
             offset_x = int(b["x"] - b["width"] / 2 - self.player.x)
             offset_y = int(b["y"] - b["height"] / 2 - self.player.y)
 
-            if self.player_mask.overlap(b_mask, (offset_x, offset_y)):
-                # COLLISION LOGIC EMPTY -> no damage yet
-                pass
-            else:
-                graze_x = int(b["x"] - b["width"] / 2 - (self.player.x + self.player_width / 2 - self.graze_radius))
-                graze_y = int(b["y"] - b["height"] / 2 - (self.player.y + self.player_width / 2 - self.graze_radius))
-                if self.graze_mask.overlap(b_mask, (graze_x, graze_y)):
-                    self.score += 1
+            if self.hit_timer <= 0:
+                if self.player_mask.overlap(b_mask, (offset_x, offset_y)):
+                    self.hit_timer = HIT_TIMEOUT_DURATION
+                else:
+                    graze_x = int(b["x"] - b["width"] / 2 - (self.player.x + self.player_width / 2 - self.graze_radius))
+                    graze_y = int(b["y"] - b["height"] / 2 - (self.player.y + self.player_width / 2 - self.graze_radius))
+                    if self.graze_mask.overlap(b_mask, (graze_x, graze_y)):
+                        self.graze_score += 1
 
             half_w = b["width"] / 2
             half_h = b["height"] / 2
             if b["x"] + half_w < 50 or b["x"] - half_w > 550 or b["y"] + half_h < 50 or b["y"] - half_h > 550:
                 self.enemy_bullets.remove(b)
+
+        if self.hit_timer <= 0:
+            enemy_offset_x = int(self.enemy_x - self.player.x)
+            enemy_offset_y = int(self.enemy_y - self.player.y)
+            if self.player_mask.overlap(enemy_mask, (enemy_offset_x, enemy_offset_y)):
+                self.hit_timer = HIT_TIMEOUT_DURATION
 
         for b in self.enemy_bullets:
             if b["image"] is not None:
@@ -851,6 +890,11 @@ class Level:
         screen.blit(score_surf, (585, 116))
         score_surf_main = self.subtitle_font.render(f"{self.score:07d}", True, FONT_COLOR)
         screen.blit(score_surf_main, (720, 120))
+
+        graze_surf = self.title_font.render(f"GRAZE:", True, FONT_COLOR)
+        screen.blit(graze_surf, (585, 156))
+        graze_surf_main = self.subtitle_font.render(f"{self.graze_score}", True, FONT_COLOR)
+        screen.blit(graze_surf_main, (720, 160))
 
         if DEBUG:
             debug_text = font.render(
