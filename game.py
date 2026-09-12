@@ -254,7 +254,7 @@ class Settings:
         self.gameStateManager = gameStateManager
         self.options = ["MUSIC", "EFFECTS", "BACK"]
         self.selected_index = 0
-        self.music_volume = 20
+        self.music_volume = 50
         self.sfx_volume = 50
         mixer.music.set_volume(self.music_volume / 100.0)
 
@@ -741,7 +741,7 @@ class Level:
         for b in self.player_bullets[:]:
             b[1] -= self.player_bullet_speed * dt
             if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
-                self.score += 5
+                self.score += 7
                 self.player_bullets.remove(b)
                 continue
             if b[1] < 0:
@@ -750,7 +750,7 @@ class Level:
             b[1] -= self.player_bullet_speed * dt
             b[0] -= self.player_bullet_speed / 10 * dt
             if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
-                self.score += 5
+                self.score += 7
                 self.player_bulletsl.remove(b)
                 continue
             if b[1] < 0:
@@ -759,7 +759,7 @@ class Level:
             b[1] -= self.player_bullet_speed * dt
             b[0] += self.player_bullet_speed / 10 * dt
             if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
-                self.score += 5
+                self.score += 7
                 self.player_bulletsr.remove(b)
                 continue
             if b[1] < 0:
