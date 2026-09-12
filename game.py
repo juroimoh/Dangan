@@ -1,4 +1,4 @@
-import pygame as py, time, sys, json, random
+import pygame as py, time, sys, json, random, math
 from pygame import mixer
 
 py.init()
@@ -167,7 +167,6 @@ class MainMenu:
 
     def run(self, dt):
         self.display.fill(BACKGROUND_COLOR)
-
         self.display.blit(cover_img, (0, 0))
 
         right_x = 840
@@ -181,10 +180,8 @@ class MainMenu:
                 color = 219, 203, 216
 
             opt_surf = self.menu_font.render(text_str, True, color)
-
             x_pos = right_x - opt_surf.get_width()
             y_pos = 410 + i * 60
-
             self.display.blit(opt_surf, (x_pos, y_pos))
 
 class LevelSelect:
@@ -218,7 +215,6 @@ class LevelSelect:
 
     def run(self, dt):
         self.display.fill(BACKGROUND_COLOR)
-
         self.display.blit(levels_bg_img, (0, 0))
         self.display.blit(levels_fg_img, (0, 0))
 
@@ -248,7 +244,6 @@ class LevelSelect:
             esc_color = (229, 207, 207)
 
         esc_surf = self.esc_font.render(esc_text, True, esc_color)
-
         esc_x = 81 - esc_surf.get_width() // 2
         esc_y = 546
         self.display.blit(esc_surf, (esc_x, esc_y))
@@ -296,7 +291,6 @@ class Settings:
 
     def run(self, dt):
         self.display.fill(BACKGROUND_COLOR)
-
         self.display.blit(options_img, (0, 0))
 
         volume_options = [
@@ -305,7 +299,7 @@ class Settings:
         ]
 
         for i, (label, vol) in enumerate(volume_options):
-            formatted_text = f"{label + ':':<9}{vol:>3}%" # All credit to Gemini for figuring this out.
+            formatted_text = f"{label + ':':<9}{vol:>3}%"
 
             if i == self.selected_index:
                 text_str = f"<{formatted_text}>"
@@ -332,18 +326,6 @@ class Settings:
         esc_y = 546
         self.display.blit(esc_surf, (esc_x, esc_y))
 
-        if is_esc_selected:
-            esc_text = f"<{esc_option}>"
-            esc_color = (255, 255, 255)
-        else:
-            esc_text = esc_option
-            esc_color = FONT_COLOR
-
-        esc_surf = self.esc_font.render(esc_text, True, esc_color)
-        esc_x = 81 - esc_surf.get_width() // 2
-        esc_y = 546
-        self.display.blit(esc_surf, (esc_x, esc_y))
-
 class Level:
     def __init__(self, display, gameStateManager, level_file, settings_ref):
         self.display = display
@@ -355,10 +337,212 @@ class Level:
             self.level_data = json.load(file)
 
         self.music_path = self.level_data["music"]
+        self.bullet_mask_cache = {}
+        self.bullet_sprite_cache = {}
+        self.preload_bullet_sprites()
+
+        self.action_library = {
+            "spawn_bullet": self.action_spawn_bullet,
+            "spawn_spread": self.action_spawn_spread,
+            "spawn_ring": self.action_spawn_ring,
+            "move_enemy": self.action_move_enemy,
+            "move_enemy_sine": self.action_move_enemy_sine,
+            "move_enemy_path": self.action_move_enemy_path,
+            "move_enemy_circle": self.action_move_enemy_circle,
+            "move_player": self.action_move_player
+        }
+
         self.reset_level()
 
         self.title_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 30)
         self.subtitle_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
+
+    def get_bullet_mask(self, radius):
+        """Generates and caches sprite masks for circular enemy bullets."""
+        if radius not in self.bullet_mask_cache:
+            surf = py.Surface((radius * 2, radius * 2), py.SRCALPHA)
+            py.draw.circle(surf, (255, 255, 255), (radius, radius), radius)
+            self.bullet_mask_cache[radius] = py.mask.from_surface(surf)
+        return self.bullet_mask_cache[radius]
+
+    def get_bullet_sprite(self, sprite_path):
+        """Loads and caches bullet images along with their sprite masks."""
+        if sprite_path not in self.bullet_sprite_cache:
+            image = py.image.load(sprite_path).convert_alpha()
+            mask = py.mask.from_surface(image)
+            self.bullet_sprite_cache[sprite_path] = (image, mask)
+        return self.bullet_sprite_cache[sprite_path]
+
+    def preload_bullet_sprites(self):
+        """Scans the level JSON timeline for sprite paths and loads them all upfront."""
+        for event in self.level_data.get("timeline", []):
+            sprite = event.get("sprite")
+            if sprite:
+                self.get_bullet_sprite(sprite)
+
+# action library
+    def _fire_single_bullet(self, b_params):
+        x = b_params.get("x", self.enemy_x + 10)
+        y = b_params.get("y", self.enemy_y + 10)
+        speed = b_params.get("speed", 200)
+        angle = b_params.get("angle", 90) # Default 90 degrees = straight down
+        radius = b_params.get("radius", 6)
+        color = b_params.get("color", (255, 50, 50))
+        movement_type = b_params.get("movement_type", "linear")
+        sprite = b_params.get("sprite", None)
+
+        rad = math.radians(angle)
+        dx = b_params.get("dx", speed * math.cos(rad))
+        dy = b_params.get("dy", speed * math.sin(rad))
+
+        bullet = {
+            "x": float(x),
+            "y": float(y),
+            "dx": float(dx),
+            "dy": float(dy),
+            "speed": float(speed),
+            "angle": float(angle),
+            "radius": int(radius),
+            "color": color,
+            "movement_type": movement_type,
+            "time_alive": 0.0,
+            "curve_rate": b_params.get("curve_rate", 45.0), # deg/sec
+            "zigzag_freq": b_params.get("zigzag_freq", 8.0),
+            "zigzag_amp": b_params.get("zigzag_amp", 150.0),
+            "accel": b_params.get("accel", 50.0),
+            "homing_rate": b_params.get("homing_rate", 90.0),
+            "sprite": sprite
+        }
+
+        if sprite:
+            image, mask = self.get_bullet_sprite(sprite)
+            bullet["image"] = image
+            bullet["mask"] = mask
+            bullet["width"] = image.get_width()
+            bullet["height"] = image.get_height()
+        else:
+            bullet["image"] = None
+            bullet["mask"] = self.get_bullet_mask(bullet["radius"])
+            bullet["width"] = bullet["radius"] * 2
+            bullet["height"] = bullet["radius"] * 2
+
+        self.enemy_bullets.append(bullet)
+
+    def action_spawn_bullet(self, event):
+        repetitions = event.get("repetitions", 1)
+        delay = event.get("delay", 0.1)
+
+        if repetitions > 1:
+            self.active_spawners.append({
+                "fire_func": self._fire_single_bullet,
+                "event": event,
+                "remaining": repetitions,
+                "timer": 0.0,
+                "interval": delay
+            })
+        else:
+            self._fire_single_bullet(event)
+
+    def _fire_spread_payload(self, event):
+        x = event.get("x", self.enemy_x + 10)
+        y = event.get("y", self.enemy_y + 10)
+        count = event.get("count", 5)
+        spread_angle = event.get("spread_angle", 60.0)
+        base_angle = event.get("base_angle", 90.0)
+
+        if count <= 1:
+            angles = [base_angle]
+        else:
+            start_angle = base_angle - (spread_angle / 2.0)
+            step = spread_angle / (count - 1)
+            angles = [start_angle + i * step for i in range(count)]
+
+        for a in angles:
+            bullet_data = dict(event)
+            bullet_data["x"] = x
+            bullet_data["y"] = y
+            bullet_data["angle"] = a
+            self._fire_single_bullet(bullet_data)
+
+    def action_spawn_spread(self, event):
+        repetitions = event.get("repetitions", 1)
+        delay = event.get("delay", 0.1)
+
+        if repetitions > 1:
+            self.active_spawners.append({
+                "fire_func": self._fire_spread_payload,
+                "event": event,
+                "remaining": repetitions,
+                "timer": 0.0,
+                "interval": delay
+            })
+        else:
+            self._fire_spread_payload(event)
+
+    def _fire_ring_payload(self, event):
+        x = event.get("x", self.enemy_x + 10)
+        y = event.get("y", self.enemy_y + 10)
+        count = event.get("count", 12)
+        base_angle = event.get("base_angle", 0.0)
+
+        step = 360.0 / count
+        for i in range(count):
+            a = base_angle + i * step
+            bullet_data = dict(event)
+            bullet_data["x"] = x
+            bullet_data["y"] = y
+            bullet_data["angle"] = a
+            self._fire_single_bullet(bullet_data)
+
+    def action_spawn_ring(self, event):
+        repetitions = event.get("repetitions", 1)
+        delay = event.get("delay", 0.1)
+
+        if repetitions > 1:
+            self.active_spawners.append({
+                "fire_func": self._fire_ring_payload,
+                "event": event,
+                "remaining": repetitions,
+                "timer": 0.0,
+                "interval": delay
+            })
+        else:
+            self._fire_ring_payload(event)
+
+    def action_move_enemy(self, event):
+        self.enemy_movement_mode = "linear"
+        self.enemy_start_pos = (self.enemy_x, self.enemy_y)
+        self.enemy_target_pos = (event.get("x", self.enemy_x), event.get("y", self.enemy_y))
+        self.enemy_move_duration = event.get("duration", 1.0)
+        self.enemy_move_elapsed = 0.0
+
+    def action_move_enemy_sine(self, event):
+        self.enemy_movement_mode = "sine"
+        self.enemy_start_pos = (self.enemy_x, self.enemy_y)
+        self.enemy_target_pos = (event.get("x", self.enemy_x), event.get("y", self.enemy_y))
+        self.enemy_move_duration = event.get("duration", 2.0)
+        self.sine_amp = event.get("amplitude", 40.0)
+        self.sine_freq = event.get("frequency", 2.0)
+        self.enemy_move_elapsed = 0.0
+
+    def action_move_enemy_path(self, event):
+        self.enemy_movement_mode = "path"
+        self.enemy_path = event.get("path", [])
+        self.enemy_path_index = 0
+
+    def action_move_enemy_circle(self, event):
+        self.enemy_movement_mode = "circle"
+        self.circle_center = (event.get("center_x", 300), event.get("center_y", 150))
+        self.circle_radius = event.get("radius", 80.0)
+        self.circle_speed = event.get("speed", 90.0)
+        self.enemy_move_duration = event.get("duration", 3.0)
+        self.enemy_move_elapsed = 0.0
+
+    def action_move_player(self, event):
+        self.player.x = event.get("x", self.player.x)
+        self.player.y = event.get("y", self.player.y)
+        self.player_x = float(self.player.x)
+        self.player_y = float(self.player.y)
 
     def on_enter(self):
         self.reset_level()
@@ -392,6 +576,27 @@ class Level:
         self.enemy_x = float(self.level_data.get("enemy_x", 280))
         self.enemy_y = float(self.level_data.get("enemy_y", 80))
 
+        self.level_time = 0.0
+        self.timeline = self.level_data.get("timeline", [])
+        self.timeline.sort(key=lambda e: e.get("time", 0))
+        self.current_event_index = 0
+
+        self.enemy_bullets = []
+        self.active_spawners = []
+
+        self.enemy_movement_mode = "idle"
+        self.enemy_move_elapsed = 0.0
+        self.enemy_move_duration = 1.0
+        self.enemy_start_pos = (self.enemy_x, self.enemy_y)
+        self.enemy_target_pos = (self.enemy_x, self.enemy_y)
+        self.sine_amp = 40.0
+        self.sine_freq = 2.0
+        self.enemy_path = []
+        self.enemy_path_index = 0
+        self.circle_center = (300, 150)
+        self.circle_radius = 80.0
+        self.circle_speed = 90.0
+
     def handle_input(self, events):
         for event in events:
             if event.type == py.KEYDOWN:
@@ -413,12 +618,78 @@ class Level:
             screen.blit(player_bullet_img, (b[0], b[1]))
 
     def run(self, dt):
-
         if not self.music_started:
             mixer.music.load(self.music_path)
             mixer.music.set_volume(self.settings.music_volume / 100.0)
             mixer.music.play(-1)
             self.music_started = True
+
+        if self.music_started:
+            self.level_time += dt
+
+        for spawner in self.active_spawners[:]:
+            spawner["timer"] -= dt
+            if spawner["timer"] <= 0:
+                spawner["fire_func"](spawner["event"])
+                spawner["remaining"] -= 1
+                spawner["timer"] = spawner["interval"]
+                if spawner["remaining"] <= 0:
+                    self.active_spawners.remove(spawner)
+
+        while self.current_event_index < len(self.timeline):
+            event = self.timeline[self.current_event_index]
+            if self.level_time >= event.get("time", 0):
+                action_type = event.get("type")
+                if action_type in self.action_library:
+                    self.action_library[action_type](event)
+                else:
+                    print(f"Warning: Unknown action type '{action_type}' in JSON.")
+                self.current_event_index += 1
+            else:
+                break
+
+        if self.enemy_movement_mode == "linear":
+            self.enemy_move_elapsed += dt
+            t = min(1.0, self.enemy_move_elapsed / self.enemy_move_duration)
+            self.enemy_x = self.enemy_start_pos[0] + (self.enemy_target_pos[0] - self.enemy_start_pos[0]) * t
+            self.enemy_y = self.enemy_start_pos[1] + (self.enemy_target_pos[1] - self.enemy_start_pos[1]) * t
+            if t >= 1.0:
+                self.enemy_movement_mode = "idle"
+
+        elif self.enemy_movement_mode == "sine":
+            self.enemy_move_elapsed += dt
+            t = min(1.0, self.enemy_move_elapsed / self.enemy_move_duration)
+            base_x = self.enemy_start_pos[0] + (self.enemy_target_pos[0] - self.enemy_start_pos[0]) * t
+            base_y = self.enemy_start_pos[1] + (self.enemy_target_pos[1] - self.enemy_start_pos[1]) * t
+            sine_offset = math.sin(self.enemy_move_elapsed * self.sine_freq * math.pi * 2) * self.sine_amp
+            self.enemy_x = base_x
+            self.enemy_y = base_y + sine_offset
+            if t >= 1.0:
+                self.enemy_movement_mode = "idle"
+
+        elif self.enemy_movement_mode == "path":
+            if self.enemy_path_index < len(self.enemy_path):
+                target = self.enemy_path[self.enemy_path_index]
+                dx = target[0] - self.enemy_x
+                dy = target[1] - self.enemy_y
+                dist = math.hypot(dx, dy)
+                speed = 150.0
+                if dist < speed * dt:
+                    self.enemy_x, self.enemy_y = target
+                    self.enemy_path_index += 1
+                else:
+                    self.enemy_x += (dx / dist) * speed * dt
+                    self.enemy_y += (dy / dist) * speed * dt
+            else:
+                self.enemy_movement_mode = "idle"
+
+        elif self.enemy_movement_mode == "circle":
+            self.enemy_move_elapsed += dt
+            angle = math.radians(self.enemy_move_elapsed * self.circle_speed)
+            self.enemy_x = self.circle_center[0] + self.circle_radius * math.cos(angle)
+            self.enemy_y = self.circle_center[1] + self.circle_radius * math.sin(angle)
+            if self.enemy_move_elapsed >= self.enemy_move_duration:
+                self.enemy_movement_mode = "idle"
 
         keys = py.key.get_pressed()
 
@@ -488,11 +759,82 @@ class Level:
             if b[1] < 0:
                 self.player_bulletsr.remove(b)
 
+# bullet library
+        for b in self.enemy_bullets[:]:
+            b["time_alive"] += dt
+            m_type = b["movement_type"]
+
+            if m_type == "curved":
+                b["angle"] += b["curve_rate"] * dt
+                rad = math.radians(b["angle"])
+                b["dx"] = b["speed"] * math.cos(rad)
+                b["dy"] = b["speed"] * math.sin(rad)
+                b["x"] += b["dx"] * dt
+                b["y"] += b["dy"] * dt
+
+            elif m_type == "zigzag":
+                rad = math.radians(b["angle"])
+                forward_x = b["speed"] * math.cos(rad)
+                forward_y = b["speed"] * math.sin(rad)
+                perp_x = -math.sin(rad)
+                perp_y = math.cos(rad)
+                side_speed = math.cos(b["time_alive"] * b["zigzag_freq"]) * b["zigzag_amp"]
+                b["x"] += (forward_x + perp_x * side_speed) * dt
+                b["y"] += (forward_y + perp_y * side_speed) * dt
+
+            elif m_type == "accelerating":
+                b["speed"] += b["accel"] * dt
+                rad = math.radians(b["angle"])
+                b["dx"] = b["speed"] * math.cos(rad)
+                b["dy"] = b["speed"] * math.sin(rad)
+                b["x"] += b["dx"] * dt
+                b["y"] += b["dy"] * dt
+
+            elif m_type == "homing":
+                target_x = self.player.x + self.player_width / 2
+                target_y = self.player.y + self.player_width / 2
+                desired_rad = math.atan2(target_y - b["y"], target_x - b["x"])
+                desired_angle = math.degrees(desired_rad)
+                diff = (desired_angle - b["angle"] + 180) % 360 - 180
+                max_turn = b["homing_rate"] * dt
+                if abs(diff) < max_turn:
+                    b["angle"] = desired_angle
+                else:
+                    b["angle"] += max_turn if diff > 0 else -max_turn
+                rad = math.radians(b["angle"])
+                b["dx"] = b["speed"] * math.cos(rad)
+                b["dy"] = b["speed"] * math.sin(rad)
+                b["x"] += b["dx"] * dt
+                b["y"] += b["dy"] * dt
+
+            else:
+                b["x"] += b["dx"] * dt
+                b["y"] += b["dy"] * dt
+
+            b_mask = b["mask"]
+            offset_x = int(b["x"] - b["width"] / 2 - self.player.x)
+            offset_y = int(b["y"] - b["height"] / 2 - self.player.y)
+
+            if self.player_mask.overlap(b_mask, (offset_x, offset_y)):
+                # COLLISION LOGIC EMPTY -> no damage yet
+                pass
+
+            half_w = b["width"] / 2
+            half_h = b["height"] / 2
+            if b["x"] + half_w < 50 or b["x"] - half_w > 550 or b["y"] + half_h < 50 or b["y"] - half_h > 550:
+                self.enemy_bullets.remove(b)
+
+        for b in self.enemy_bullets:
+            if b["image"] is not None:
+                screen.blit(b["image"], (b["x"] - b["width"] / 2, b["y"] - b["height"] / 2))
+            else:
+                py.draw.circle(screen, b["color"], (int(b["x"]), int(b["y"])), b["radius"])
+
         self.draw_enemy()
         self.draw_player_bullets()
         self.draw_player()
 
-        self.display.blit(border_img, (0, 0)) # Keep this rendering last.
+        self.display.blit(border_img, (0, 0))
 
         score_surf = self.title_font.render(f"SCORE:", True, FONT_COLOR)
         screen.blit(score_surf, (585, 116))

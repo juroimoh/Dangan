@@ -1,9 +1,208 @@
 {
-  "level_name": "Level 1",
   "music": "assets/audio/Skyrider.ogg",
-  "events": [
-        {"time": 1.0, "type": "spawn", "x": 150, "y": -50, "vx": 0, "vy": 40, "hp": 5, "bullet_type": "straight", "shoot_cooldown": 1.5},
-        {"time": 3.5, "type": "spawn", "x": 400, "y": -50, "vx": -20, "vy": 30, "hp": 8, "bullet_type": "aimed", "shoot_cooldown": 2.0},
-        {"time": 6.0, "type": "spawn", "x": 275, "y": -50, "vx": 0, "vy": 20, "hp": 15, "bullet_type": "spread", "shoot_cooldown": 3.0}
-    ]
+  "enemy_x": 300,
+  "enemy_y": 80,
+  "timeline": [
+    {
+      "time": 0.5,
+      "type": "move_enemy",
+      "x": 150,
+      "y": 80,
+      "duration": 1.5
+    },
+    {
+      "time": 1.0,
+      "type": "spawn_bullet",
+      "sprite": "assets/bubbleshot.png",
+      "angle": 90,
+      "speed": 220,
+      "repetitions": 12,
+      "delay": 0.12
+    },
+    {
+      "time": 2.5,
+      "type": "move_enemy",
+      "x": 450,
+      "y": 80,
+      "duration": 1.5
+    },
+    {
+      "time": 2.8,
+      "type": "spawn_spread",
+      "sprite": "assets/bubbleshot.png",
+      "count": 5,
+      "spread_angle": 60,
+      "base_angle": 90,
+      "speed": 200,
+      "repetitions": 6,
+      "delay": 0.25
+    },
+    {
+      "time": 5.0,
+      "type": "move_enemy_sine",
+      "x": 150,
+      "y": 100,
+      "duration": 4.0,
+      "amplitude": 45.0,
+      "frequency": 1.5
+    },
+    {
+      "time": 5.5,
+      "type": "spawn_spread",
+      "sprite": "assets/bubbleshot.png",
+      "count": 7,
+      "spread_angle": 80,
+      "base_angle": 90,
+      "movement_type": "curved",
+      "curve_rate": 35.0,
+      "speed": 180,
+      "repetitions": 8,
+      "delay": 0.35
+    },
+    {
+      "time": 5.7,
+      "type": "spawn_spread",
+      "sprite": "assets/bubbleshot.png",
+      "count": 7,
+      "spread_angle": 80,
+      "base_angle": 90,
+      "movement_type": "curved",
+      "curve_rate": -35.0,
+      "speed": 180,
+      "repetitions": 8,
+      "delay": 0.35
+    },
+    {
+      "time": 10.0,
+      "type": "move_enemy_circle",
+      "center_x": 300,
+      "center_y": 140,
+      "radius": 90.0,
+      "speed": 100.0,
+      "duration": 5.0
+    },
+    {
+      "time": 10.5,
+      "type": "spawn_ring",
+      "sprite": "assets/bubbleshot.png",
+      "count": 20,
+      "base_angle": 0,
+      "speed": 160,
+      "repetitions": 6,
+      "delay": 0.6
+    },
+    {
+      "time": 11.0,
+      "type": "spawn_bullet",
+      "sprite": "assets/bubbleshot.png",
+      "angle": 90,
+      "movement_type": "zigzag",
+      "zigzag_freq": 10.0,
+      "zigzag_amp": 180.0,
+      "speed": 190,
+      "repetitions": 12,
+      "delay": 0.25
+    },
+    {
+      "time": 16.0,
+      "type": "move_enemy_path",
+      "path": [
+        [100, 80],
+        [500, 80],
+        [500, 200],
+        [100, 200],
+        [300, 100]
+      ]
+    },
+    {
+      "time": 16.5,
+      "type": "spawn_spread",
+      "sprite": "assets/bubbleshot.png",
+      "count": 11,
+      "spread_angle": 120,
+      "base_angle": 90,
+      "movement_type": "accelerating",
+      "speed": 400,
+      "accel": 110.0,
+      "repetitions": 7,
+      "delay": 0.45
+    },
+    {
+      "time": 21.0,
+      "type": "spawn_spread",
+      "sprite": "assets/basicbullet.png",
+      "x": 300,
+      "y": 100,
+      "duration": 1.0
+    },
+    {
+      "time": 22.0,
+      "type": "spawn_ring",
+      "sprite": "assets/basicbullet.png",
+      "count": 16,
+      "base_angle": 0,
+      "movement_type": "homing",
+      "speed": 130,
+      "homing_rate": 75.0,
+      "repetitions": 4,
+      "delay": 0.9
+    },
+    {
+      "time": 27.0,
+      "type": "move_enemy_sine",
+      "x": 450,
+      "y": 120,
+      "duration": 10.0,
+      "amplitude": 70.0,
+      "frequency": 2.0
+    },
+    {
+      "time": 27.5,
+      "type": "spawn_ring",
+      "sprite": "assets/basicbullet.png",
+      "count": 28,
+      "base_angle": 0,
+      "speed": 170,
+      "repetitions": 12,
+      "delay": 0.7
+    },
+    {
+      "time": 28.0,
+      "type": "spawn_spread",
+      "sprite": "assets/basicbullet.png",
+      "count": 9,
+      "spread_angle": 70,
+      "base_angle": 90,
+      "movement_type": "curved",
+      "curve_rate": 40.0,
+      "speed": 180,
+      "repetitions": 15,
+      "delay": 0.4
+    },
+    {
+      "time": 28.2,
+      "type": "spawn_spread",
+      "sprite": "assets/basicbullet.png",
+      "count": 9,
+      "spread_angle": 70,
+      "base_angle": 90,
+      "movement_type": "curved",
+      "curve_rate": -40.0,
+      "speed": 180,
+      "repetitions": 15,
+      "delay": 0.4
+    },
+    {
+      "time": 29.0,
+      "type": "spawn_bullet",
+      "sprite": "assets/basicbullet.png",
+      "angle": 90,
+      "movement_type": "zigzag",
+      "zigzag_freq": 12.0,
+      "zigzag_amp": 220.0,
+      "speed": 210,
+      "repetitions": 18,
+      "delay": 0.25
+    }
+  ]
 }
