@@ -711,7 +711,7 @@ class Level:
 
         self.score_accum += SURVIVAL_SCORE_RATE * dt
         tick_score = int(self.score_accum)
-        if tick_score > 0:
+        if tick_score > 0 and self.hit_timer <= 0:
             self.score += tick_score
             self.score_accum -= tick_score
 
