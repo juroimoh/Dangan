@@ -633,7 +633,7 @@ class Level:
         self.player_y = float(self.player.y)
         self.player_width = 14
 
-        self.graze_margin = 9 # originally was 6
+        self.graze_margin = 12 # originally was 6
         self.graze_radius = int(math.hypot(self.player_width, self.player_width) / 2) + self.graze_margin
         graze_surf = py.Surface((self.graze_radius * 2, self.graze_radius * 2), py.SRCALPHA)
         py.draw.circle(graze_surf, (255, 255, 255), (self.graze_radius, self.graze_radius), self.graze_radius)
@@ -1114,7 +1114,7 @@ class Game:
         self.gameStateManager = GameStateManager('main_menu')
 
         self.settings = Settings(self.screen, self.gameStateManager)
-        self.levelone = Level(self.screen, self.gameStateManager, "levels/level1.json", self.settings)
+        self.levelone = Level(self.screen, self.gameStateManager, "levels/level_one_sheru.json", self.settings)
         self.splash = Splash(self.screen, self.gameStateManager)
         self.main_menu = MainMenu(self.screen, self.gameStateManager)
         self.level_select = LevelSelect(self.screen, self.gameStateManager, self.levelone)
