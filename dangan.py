@@ -19,6 +19,8 @@ cover_img = py.image.load("assets/backgrounds/mainmenu_art.png").convert_alpha()
 levels_bg_img = py.image.load("assets/backgrounds/level_art_behind.png").convert_alpha()
 levels_fg_img = py.image.load("assets/backgrounds/level_art_front.png").convert_alpha()
 options_img = py.image.load("assets/backgrounds/options_art.png").convert_alpha()
+win_level_bg_img = py.image.load("assets/backgrounds/win_level_art.png").convert_alpha()
+lose_level_bg_img = py.image.load("assets/backgrounds/lose_level_art.png").convert_alpha()
 enemy_img = py.image.load("assets/entities/sheru_mini.png").convert_alpha()
 spinningblade_img = py.image.load("assets/entities/blade.png").convert_alpha()
 spinningblade_gray_img = py.transform.grayscale(spinningblade_img)
@@ -26,6 +28,12 @@ spinningblade_red_img = spinningblade_img.copy()
 spinningblade_red_img.fill((255, 60, 60, 255), special_flags=py.BLEND_RGBA_MULT)
 fullheart_img = py.image.load("assets/entities/full_heart.png").convert_alpha()
 halfheart_img = py.image.load("assets/entities/half_heart.png").convert_alpha()
+haku_img = py.image.load("assets/entities/haku.png").convert_alpha()
+mei_img = py.image.load("assets/entities/mei.png").convert_alpha()
+gutsu_img = py.image.load("assets/entities/gutsu.png").convert_alpha()
+kuu_img = py.image.load("assets/entities/kuu.png").convert_alpha()
+shii_img = py.image.load("assets/entities/shii.png").convert_alpha()
+RANK_IMAGES = {"HAKU": haku_img, "MEI": mei_img, "GUTSU": gutsu_img, "KUU": kuu_img, "SHII": shii_img}
 
 player_mask = py.mask.from_surface(player_img)
 player_bullet_mask = py.mask.from_surface(player_bullet_img)
@@ -45,12 +53,18 @@ HUD_DISABLED_COLOR = (150, 165, 165)
 
 BASE_SPEED = 250
 
+DEBUG_END_SCREEN_SKIP = True
+DEBUG_TEST_SCORE = 56000
+DEBUG_TEST_GRAZE = 250
+DEBUG_TEST_HEALTH = 8
+
 HIT_TIMEOUT_DURATION = 2.0
 HIT_FADE_WINDOW = 0.4
 SURVIVAL_SCORE_RATE = 40.0
 SURVIVAL_SCORE_DOUBLE_TIME = 15.0
 SPINNING_BLADE_INACTIVE_ALPHA = 45
 PLAYER_MAX_HEALTH = 8
+DAMAGE_PENALTY_PER_HIT = 1000
 
 previous_time = time.time()
 
@@ -355,11 +369,12 @@ class Settings:
         self.display.blit(esc_surf, (esc_x, esc_y))
 
 class Level:
-    def __init__(self, display, gameStateManager, level_file, settings_ref):
+    def __init__(self, display, gameStateManager, level_file, settings_ref, rank_thresholds=None):
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_file = level_file
         self.settings = settings_ref
+        self.rank_thresholds = rank_thresholds
 
         with open(self.level_file, "r") as file:
             self.level_data = json.load(file)
@@ -420,6 +435,7 @@ class Level:
         self.hit_timer = HIT_TIMEOUT_DURATION
         self.survival_timer = 0.0
         self.health = max(0, self.health - 1)
+        self.damage_taken += 1
         if self.health <= 0:
             self.gameStateManager.set_state('level1_lose')
 
@@ -613,7 +629,6 @@ class Level:
 
     def on_exit(self):
         mixer.music.stop()
-        self.reset_level()
 
     def reset_level(self):
         mixer.music.stop()
@@ -647,6 +662,7 @@ class Level:
         self.survival_timer = 0.0
         self.graze_score = 0
         self.health = PLAYER_MAX_HEALTH
+        self.damage_taken = 0
         self.enemy_x = float(self.level_data.get("enemy_x", 280))
         self.enemy_y = float(self.level_data.get("enemy_y", 80))
 
@@ -679,6 +695,16 @@ class Level:
             if event.type == py.KEYDOWN:
                 if event.key == py.K_ESCAPE:
                     self.gameStateManager.set_state('level_select')
+                elif DEBUG_END_SCREEN_SKIP and event.key == py.K_F1:
+                    self.score = DEBUG_TEST_SCORE
+                    self.graze_score = DEBUG_TEST_GRAZE
+                    self.health = DEBUG_TEST_HEALTH
+                    self.gameStateManager.set_state('level1_win')
+                elif DEBUG_END_SCREEN_SKIP and event.key == py.K_F2:
+                    self.score = DEBUG_TEST_SCORE
+                    self.graze_score = DEBUG_TEST_GRAZE
+                    self.health = 0
+                    self.gameStateManager.set_state('level1_lose')
 
     def draw_player(self):
         self.display.blit(player_img, (self.player.x, self.player.y))
@@ -1029,17 +1055,23 @@ class Level:
                 screen.blit(halfheart_img, (730 + i * 30, 230))
 
 class LevelResultScreen:
-    def __init__(self, display, gameStateManager, level_ref, title_text, music_path=None):
+    def __init__(self, display, gameStateManager, level_ref, title_text, music_path=None, show_rating=False, background_img=None):
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_ref = level_ref
         self.title_text = title_text
         self.music_path = music_path
+        self.show_rating = show_rating
+        self.background_img = background_img
         self.options = ["RETRY", "LEAVE"]
         self.selected_index = 0
 
         self.title_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 50)
         self.option_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
+        self.stat_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 28)
+        self.stat_small_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 18)
+        self.equation_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 26)
+        self.rank_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 35)
 
     def on_enter(self):
         self.selected_index = 0
@@ -1047,10 +1079,28 @@ class LevelResultScreen:
             mixer.music.load(self.music_path)
             mixer.music.play(0)
 
+    def _compute_rating(self):
+        score = self.level_ref.score
+        graze = self.level_ref.graze_score
+        damage_taken = self.level_ref.damage_taken
+        graze_bonus = (graze // 100) * 1000
+        damage_penalty = damage_taken * DAMAGE_PENALTY_PER_HIT
+        final_score = score + graze_bonus - damage_penalty
+
+        rank = "SHII"
+        for rank_name, threshold in self.level_ref.rank_thresholds:
+            if final_score >= threshold:
+                rank = rank_name
+                break
+
+        return score, graze, graze_bonus, damage_taken, damage_penalty, final_score, rank
+
     def handle_input(self, events):
         for event in events:
             if event.type == py.KEYDOWN:
-                if event.key in (py.K_UP, py.K_w, py.K_DOWN, py.K_s):
+                if event.key == py.K_ESCAPE:
+                    self.gameStateManager.set_state('level_select')
+                elif event.key in (py.K_UP, py.K_w, py.K_DOWN, py.K_s):
                     self.selected_index = (self.selected_index + 1) % len(self.options)
                 elif event.key in (py.K_SPACE, py.K_RETURN):
                     if self.selected_index == 0:
@@ -1059,24 +1109,70 @@ class LevelResultScreen:
                         self.gameStateManager.set_state('level_select')
 
     def run(self, dt):
-        self.display.fill(BACKGROUND_COLOR)
+        if self.background_img is not None:
+            self.display.blit(self.background_img, (0, 0))
+        else:
+            self.display.fill(BACKGROUND_COLOR)
 
-        title_surf = self.title_font.render(self.title_text, True, FONT_COLOR)
-        self.display.blit(title_surf, (SCREEN_WIDTH / 2 - title_surf.get_width() / 2, 200))
+        if self.show_rating:
+            score, graze, graze_bonus, damage_taken, damage_penalty, final_score, rank = self._compute_rating()
+
+            equation_x = 70
+            line_height = 32
+            line1_y = 260
+
+            line1_text = "   " + f"{score:07d}"
+            line2_text = "  +" + f"{graze_bonus:>7d}"
+            line3_text = "  -" + f"{damage_penalty:>7d}"
+
+            line1_surf = self.equation_font.render(line1_text, True, (255, 255, 233))
+            line2_surf = self.equation_font.render(line2_text, True, (255, 255, 233))
+            line3_surf = self.equation_font.render(line3_text, True, (255, 255, 233))
+
+            self.display.blit(line1_surf, (equation_x, line1_y))
+            self.display.blit(line2_surf, (equation_x, line1_y + line_height))
+            self.display.blit(line3_surf, (equation_x, line1_y + line_height * 2))
+
+            label_x = equation_x + line1_surf.get_width() + 15
+            score_label_surf = self.stat_small_font.render("(score)", True, (255, 255, 233))
+            graze_label_surf = self.stat_small_font.render("(graze)", True, (255, 255, 233))
+            damage_label_surf = self.stat_small_font.render("(damage)", True, (255, 255, 233))
+            self.display.blit(score_label_surf, (label_x, line1_y + 6))
+            self.display.blit(graze_label_surf, (label_x, line1_y + line_height + 6))
+            self.display.blit(damage_label_surf, (label_x, line1_y + line_height * 2 + 6))
+
+            total_surf = self.stat_font.render(f"SCORE: {final_score:07d}", True, (255, 255, 233))
+            damage_taken_surf = self.stat_font.render(f"DAMAGE TAKEN: {damage_taken}", True, (255, 255, 233))
+            self.display.blit(total_surf, (equation_x, line1_y + line_height * 3 + 20))
+            self.display.blit(damage_taken_surf, (equation_x, line1_y + line_height * 4 + 20))
+
+            rank_img = RANK_IMAGES[rank]
+            RANK_IMAGE_SCALE = 1.3
+            scaled_w = int(rank_img.get_width() * RANK_IMAGE_SCALE)
+            scaled_h = int(rank_img.get_height() * RANK_IMAGE_SCALE)
+            rank_img = py.transform.smoothscale(rank_img, (scaled_w, scaled_h))
+            rank_x = 540 # was SCREEN_WIDTH - rank_img.get_width() - 60
+            rank_y = 50 # was SCREEN_HEIGHT / 2 - rank_img.get_height() / 2
+            self.display.blit(rank_img, (rank_x, rank_y))
+
+            rank_label_surf = self.rank_font.render(rank, True, (255,255,255))
+            rank_label_x = rank_x + rank_img.get_width() / 2 - rank_label_surf.get_width() / 2 + 45
+            rank_label_y = rank_y + rank_img.get_height() + 81
+            self.display.blit(rank_label_surf, (rank_label_x, rank_label_y))
 
         for i, option in enumerate(self.options):
             is_selected = (i == self.selected_index)
 
             if is_selected:
                 text_str = f"<{option}>"
-                color = (255, 255, 255)
+                color = HIGHLIGHT_COLOR
             else:
                 text_str = option
-                color = FONT_COLOR
+                color = (213, 203, 183)
 
             opt_surf = self.option_font.render(text_str, True, color)
             opt_x = SCREEN_WIDTH / 2 - opt_surf.get_width() / 2
-            opt_y = 480 + i * 40
+            opt_y = 500 + i * 40
             self.display.blit(opt_surf, (opt_x, opt_y))
 
 class Menu:
@@ -1095,12 +1191,18 @@ class Game:
         self.gameStateManager = GameStateManager('main_menu')
 
         self.settings = Settings(self.screen, self.gameStateManager)
-        self.levelone = Level(self.screen, self.gameStateManager, "levels/level_one_sheru.json", self.settings)
+        self.levelone = Level(self.screen, self.gameStateManager, "levels/level_one_sheru.json", self.settings, rank_thresholds=[
+            ("HAKU", 70000),
+            ("MEI", 60000),
+            ("GUTSU", 35000),
+            ("KUU", 15000),
+            ("SHII", 0)
+        ])
         self.splash = Splash(self.screen, self.gameStateManager)
         self.main_menu = MainMenu(self.screen, self.gameStateManager)
         self.level_select = LevelSelect(self.screen, self.gameStateManager, self.levelone)
-        self.level1_win = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "LEVEL CLEAR")
-        self.level1_lose = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "GAME OVER", "assets/audio/level_lose.ogg")
+        self.level1_win = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "LEVEL CLEAR", show_rating=True, background_img=win_level_bg_img)
+        self.level1_lose = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "GAME OVER", "assets/audio/level_lose.ogg", background_img=lose_level_bg_img)
 
         self.states = {
             'splash': self.splash,
