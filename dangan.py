@@ -54,7 +54,7 @@ HUD_DISABLED_COLOR = (150, 165, 165)
 BASE_SPEED = 250
 
 DEBUG_END_SCREEN_SKIP = True
-DEBUG_TEST_SCORE = 56000
+DEBUG_TEST_SCORE = 66000
 DEBUG_TEST_GRAZE = 250
 DEBUG_TEST_HEALTH = 8
 
@@ -1156,8 +1156,8 @@ class LevelResultScreen:
             self.display.blit(rank_img, (rank_x, rank_y))
 
             rank_label_surf = self.rank_font.render(rank, True, (255,255,255))
-            rank_label_x = rank_x + rank_img.get_width() / 2 - rank_label_surf.get_width() / 2 + 45
-            rank_label_y = rank_y + rank_img.get_height() + 81
+            rank_label_x = rank_x + rank_img.get_width() / 2 - rank_label_surf.get_width() / 2 + 44
+            rank_label_y = rank_y + rank_img.get_height() + 80
             self.display.blit(rank_label_surf, (rank_label_x, rank_label_y))
 
         for i, option in enumerate(self.options):
