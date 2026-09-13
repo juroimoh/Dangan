@@ -1024,14 +1024,14 @@ class Level:
         graze_surf_main = self.subtitle_font.render(f"{self.graze_score}", True, hud_color)
         screen.blit(graze_surf_main, (720, 160))
 
-        health_surf = self.title_font.render(f"PLAYER:", True, FONT_COLOR)
-        screen.blit(health_surf, (585, 226))
+        health_surf = self.title_font.render(f"HEALTH:", True, FONT_COLOR)
+        screen.blit(health_surf, (585, 196))
         for i in range(4):
             heart_remaining = self.health - (3 - i) * 2
             if heart_remaining >= 2:
-                screen.blit(fullheart_img, (740 + i * 30, 230))
+                screen.blit(fullheart_img, (720 + i * 27, 200))
             elif heart_remaining == 1:
-                screen.blit(halfheart_img, (740 + i * 30, 230))
+                screen.blit(halfheart_img, (720 + i * 27, 200))
 
         if DEBUG:
             debug_text = font.render(
@@ -1048,11 +1048,12 @@ class Level:
             screen.blit(debug_bottom, (660, 100))
 
 class LevelResultScreen:
-    def __init__(self, display, gameStateManager, level_ref, title_text):
+    def __init__(self, display, gameStateManager, level_ref, title_text, music_path=None):
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_ref = level_ref
         self.title_text = title_text
+        self.music_path = music_path
         self.options = ["RETRY", "LEAVE"]
         self.selected_index = 0
 
@@ -1061,6 +1062,9 @@ class LevelResultScreen:
 
     def on_enter(self):
         self.selected_index = 0
+        if self.music_path:
+            mixer.music.load(self.music_path)
+            mixer.music.play(0)
 
     def handle_input(self, events):
         for event in events:
@@ -1115,7 +1119,7 @@ class Game:
         self.main_menu = MainMenu(self.screen, self.gameStateManager)
         self.level_select = LevelSelect(self.screen, self.gameStateManager, self.levelone)
         self.level1_win = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "LEVEL CLEAR")
-        self.level1_lose = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "GAME OVER")
+        self.level1_lose = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "GAME OVER", "assets/audio/Result-Over-Par.ogg")
 
         self.states = {
             'splash': self.splash,
