@@ -24,6 +24,8 @@ spinningblade_img = py.image.load("assets/spinningblade.png").convert_alpha()
 spinningblade_gray_img = py.transform.grayscale(spinningblade_img)
 spinningblade_red_img = spinningblade_img.copy()
 spinningblade_red_img.fill((255, 60, 60, 255), special_flags=py.BLEND_RGBA_MULT)
+fullheart_img = py.image.load("assets/fullheart.png").convert_alpha()
+halfheart_img = py.image.load("assets/halfheart.png").convert_alpha()
 
 player_mask = py.mask.from_surface(player_img)
 player_bullet_mask = py.mask.from_surface(player_bullet_img)
@@ -1022,10 +1024,14 @@ class Level:
         graze_surf_main = self.subtitle_font.render(f"{self.graze_score}", True, hud_color)
         screen.blit(graze_surf_main, (720, 160))
 
-        health_surf = self.title_font.render(f"HEALTH:", True, FONT_COLOR)
-        screen.blit(health_surf, (585, 196))
-        health_surf_main = self.subtitle_font.render(f"{self.health}", True, FONT_COLOR)
-        screen.blit(health_surf_main, (720, 200))
+        health_surf = self.title_font.render(f"PLAYER:", True, FONT_COLOR)
+        screen.blit(health_surf, (585, 226))
+        for i in range(4):
+            heart_remaining = self.health - (3 - i) * 2
+            if heart_remaining >= 2:
+                screen.blit(fullheart_img, (740 + i * 30, 230))
+            elif heart_remaining == 1:
+                screen.blit(halfheart_img, (740 + i * 30, 230))
 
         if DEBUG:
             debug_text = font.render(
