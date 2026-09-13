@@ -35,7 +35,16 @@ kuu_img = py.image.load("assets/entities/kuu.png").convert_alpha()
 shii_img = py.image.load("assets/entities/shii.png").convert_alpha()
 RANK_IMAGES = {"HAKU": haku_img, "MEI": mei_img, "GUTSU": gutsu_img, "KUU": kuu_img, "SHII": shii_img}
 
-player_mask = py.mask.from_surface(player_img)
+PLAYER_HITBOX_INSET = 1
+
+def _build_player_hitbox_mask(image, inset):
+    width, height = image.get_size()
+    hitbox_surf = py.Surface((width, height), py.SRCALPHA)
+    inset_rect = py.Rect(inset, inset, max(1, width - inset * 2), max(1, height - inset * 2))
+    py.draw.rect(hitbox_surf, (255, 255, 255, 255), inset_rect)
+    return py.mask.from_surface(hitbox_surf)
+
+player_mask = _build_player_hitbox_mask(player_img, PLAYER_HITBOX_INSET)
 player_bullet_mask = py.mask.from_surface(player_bullet_img)
 enemy_mask = py.mask.from_surface(enemy_img)
 
@@ -1069,12 +1078,15 @@ class LevelResultScreen:
         self.title_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 50)
         self.option_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
         self.stat_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 28)
+        self.stat_font_small = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 18)
         self.stat_small_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 18)
         self.equation_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 26)
         self.rank_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 35)
 
     def on_enter(self):
         self.selected_index = 0
+        keys = py.key.get_pressed()
+        self.confirm_ready = not (keys[py.K_SPACE] or keys[py.K_RETURN])
         if self.music_path:
             mixer.music.load(self.music_path)
             mixer.music.play(0)
@@ -1103,12 +1115,19 @@ class LevelResultScreen:
                 elif event.key in (py.K_UP, py.K_w, py.K_DOWN, py.K_s):
                     self.selected_index = (self.selected_index + 1) % len(self.options)
                 elif event.key in (py.K_SPACE, py.K_RETURN):
+                    if not self.confirm_ready:
+                        continue
                     if self.selected_index == 0:
                         self.gameStateManager.set_state('levelone')
                     else:
                         self.gameStateManager.set_state('level_select')
 
     def run(self, dt):
+        if not self.confirm_ready:
+            keys = py.key.get_pressed()
+            if not (keys[py.K_SPACE] or keys[py.K_RETURN]):
+                self.confirm_ready = True
+
         if self.background_img is not None:
             self.display.blit(self.background_img, (0, 0))
         else:
@@ -1141,10 +1160,10 @@ class LevelResultScreen:
             self.display.blit(graze_label_surf, (label_x, line1_y + line_height + 6))
             self.display.blit(damage_label_surf, (label_x, line1_y + line_height * 2 + 6))
 
-            total_surf = self.stat_font.render(f"SCORE: {final_score:07d}", True, (255, 255, 233))
-            damage_taken_surf = self.stat_font.render(f"DAMAGE TAKEN: {damage_taken}", True, (255, 255, 233))
+            total_surf = self.stat_font.render(f"SCORE: {final_score}", True, (255, 255, 233))
+            deaths_surf = self.stat_font_small.render(f"DEATHS: {damage_taken}", True, (255, 255, 233))
             self.display.blit(total_surf, (equation_x, line1_y + line_height * 3 + 20))
-            self.display.blit(damage_taken_surf, (equation_x, line1_y + line_height * 4 + 20))
+            self.display.blit(deaths_surf, (equation_x, line1_y + line_height * 3 + 20 + total_surf.get_height() + 4))
 
             rank_img = RANK_IMAGES[rank]
             RANK_IMAGE_SCALE = 1.3
