@@ -12,20 +12,20 @@ py.display.set_caption('Dangan')
 font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 28)
 title_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 42)
 
-border_img = py.image.load("assets/gamebackground.png").convert_alpha()
-player_img = py.image.load("assets/player.png").convert_alpha()
-player_bullet_img = py.image.load("assets/player_bullet.png").convert_alpha()
-cover_img = py.image.load("assets/dangan1_cover.png").convert_alpha()
-levels_bg_img = py.image.load("assets/dangan1_levels_behind.png").convert_alpha()
-levels_fg_img = py.image.load("assets/dangan1_levels_front.png").convert_alpha()
-options_img = py.image.load("assets/dangan_options.png").convert_alpha()
-enemy_img = py.image.load("assets/sherumini.png").convert_alpha()
-spinningblade_img = py.image.load("assets/spinningblade.png").convert_alpha()
+border_img = py.image.load("assets/backgrounds/game_art.png").convert_alpha()
+player_img = py.image.load("assets/entities/player.png").convert_alpha()
+player_bullet_img = py.image.load("assets/entities/player_bullet.png").convert_alpha()
+cover_img = py.image.load("assets/backgrounds/mainmenu_art.png").convert_alpha()
+levels_bg_img = py.image.load("assets/backgrounds/level_art_behind.png").convert_alpha()
+levels_fg_img = py.image.load("assets/backgrounds/level_art_front.png").convert_alpha()
+options_img = py.image.load("assets/backgrounds/options_art.png").convert_alpha()
+enemy_img = py.image.load("assets/entities/sheru_mini.png").convert_alpha()
+spinningblade_img = py.image.load("assets/entities/blade.png").convert_alpha()
 spinningblade_gray_img = py.transform.grayscale(spinningblade_img)
 spinningblade_red_img = spinningblade_img.copy()
 spinningblade_red_img.fill((255, 60, 60, 255), special_flags=py.BLEND_RGBA_MULT)
-fullheart_img = py.image.load("assets/fullheart.png").convert_alpha()
-halfheart_img = py.image.load("assets/halfheart.png").convert_alpha()
+fullheart_img = py.image.load("assets/entities/full_heart.png").convert_alpha()
+halfheart_img = py.image.load("assets/entities/half_heart.png").convert_alpha()
 
 player_mask = py.mask.from_surface(player_img)
 player_bullet_mask = py.mask.from_surface(player_bullet_img)
@@ -61,7 +61,7 @@ class GameStateManager:
         self.currentState = currentState
         self.states = {}
         self.menu_states = {'splash', 'main_menu', 'level_select', 'settings'}
-        self.menu_music_path = "assets/audio/Crystal-Waver.ogg"
+        self.menu_music_path = "assets/audio/lobby_music.ogg"
 
         self.is_transitioning = True
         self.fade_alpha = 255.0
@@ -388,7 +388,6 @@ class Level:
         self.subtitle_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
 
     def get_bullet_mask(self, radius):
-        """Generates and caches sprite masks for circular enemy bullets."""
         if radius not in self.bullet_mask_cache:
             surf = py.Surface((radius * 2, radius * 2), py.SRCALPHA)
             py.draw.circle(surf, (255, 255, 255), (radius, radius), radius)
@@ -396,7 +395,6 @@ class Level:
         return self.bullet_mask_cache[radius]
 
     def get_bullet_sprite(self, sprite_path):
-        """Loads and caches bullet images along with their sprite masks."""
         if sprite_path not in self.bullet_sprite_cache:
             image = py.image.load(sprite_path).convert_alpha()
             mask = py.mask.from_surface(image)
@@ -404,14 +402,12 @@ class Level:
         return self.bullet_sprite_cache[sprite_path]
 
     def preload_bullet_sprites(self):
-        """Scans the level JSON timeline for sprite paths and loads them all upfront."""
         for event in self.level_data.get("timeline", []):
             sprite = event.get("sprite")
             if sprite:
                 self.get_bullet_sprite(sprite)
 
     def _rotate_blade_image(self, image, pivot_pos, angle):
-        """Rotates image around its bottom-middle point instead of its center, keeping pivot_pos fixed on screen."""
         origin_local = (image.get_width() / 2, image.get_height())
         image_rect = image.get_rect(topleft=(pivot_pos[0] - origin_local[0], pivot_pos[1] - origin_local[1]))
         offset_center_to_pivot = py.math.Vector2(pivot_pos) - image_rect.center
@@ -1119,7 +1115,7 @@ class Game:
         self.main_menu = MainMenu(self.screen, self.gameStateManager)
         self.level_select = LevelSelect(self.screen, self.gameStateManager, self.levelone)
         self.level1_win = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "LEVEL CLEAR")
-        self.level1_lose = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "GAME OVER", "assets/audio/Result-Over-Par.ogg")
+        self.level1_lose = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "GAME OVER", "assets/audio/level_lose.ogg")
 
         self.states = {
             'splash': self.splash,
