@@ -43,7 +43,6 @@ HIGHLIGHT_COLOR = (255, 215, 0)
 DISABLED_COLOR = (143, 122, 122)
 HUD_DISABLED_COLOR = (150, 165, 165)
 
-DEBUG = False
 BASE_SPEED = 250
 
 HIT_TIMEOUT_DURATION = 2.0
@@ -1028,20 +1027,6 @@ class Level:
                 screen.blit(fullheart_img, (730 + i * 30, 230))
             elif heart_remaining == 1:
                 screen.blit(halfheart_img, (730 + i * 30, 230))
-
-        if DEBUG:
-            debug_text = font.render(
-                f"debug:   x {self.player.x}   y {self.player.y}   |   {self.player_speed}, {len(self.player_bullets)}x3", True, FONT_COLOR)
-            screen.blit(debug_text, (10, 10))
-
-            debug_top = font.render(f"{self.player.top}", True, FONT_COLOR)
-            screen.blit(debug_top, (660, 20))
-            debug_right = font.render(f"{self.player.right}", True, FONT_COLOR)
-            screen.blit(debug_right, (700, 60))
-            debug_left = font.render(f"{self.player.left}", True, FONT_COLOR)
-            screen.blit(debug_left, (620, 60))
-            debug_bottom = font.render(f"{self.player.bottom}", True, FONT_COLOR)
-            screen.blit(debug_bottom, (660, 100))
 
 class LevelResultScreen:
     def __init__(self, display, gameStateManager, level_ref, title_text, music_path=None):
