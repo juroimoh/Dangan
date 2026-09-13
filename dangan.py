@@ -1025,13 +1025,13 @@ class Level:
         screen.blit(graze_surf_main, (720, 160))
 
         health_surf = self.title_font.render(f"HEALTH:", True, FONT_COLOR)
-        screen.blit(health_surf, (585, 196))
+        screen.blit(health_surf, (585, 226))
         for i in range(4):
             heart_remaining = self.health - (3 - i) * 2
             if heart_remaining >= 2:
-                screen.blit(fullheart_img, (720 + i * 27, 200))
+                screen.blit(fullheart_img, (730 + i * 30, 230))
             elif heart_remaining == 1:
-                screen.blit(halfheart_img, (720 + i * 27, 200))
+                screen.blit(halfheart_img, (730 + i * 30, 230))
 
         if DEBUG:
             debug_text = font.render(
