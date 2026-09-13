@@ -39,14 +39,17 @@ BACKGROUND_COLOR = (16, 15, 22)
 FONT_COLOR = (214, 255, 255)
 HIGHLIGHT_COLOR = (255, 215, 0)
 DISABLED_COLOR = (143, 122, 122)
+HUD_DISABLED_COLOR = (150, 165, 165)
 
 DEBUG = False
 BASE_SPEED = 250
 
 HIT_TIMEOUT_DURATION = 2.0
 HIT_FADE_WINDOW = 0.4
-SURVIVAL_SCORE_RATE = 60.0
+SURVIVAL_SCORE_RATE = 40.0
+SURVIVAL_SCORE_DOUBLE_TIME = 15.0
 SPINNING_BLADE_INACTIVE_ALPHA = 45
+PLAYER_MAX_HEALTH = 8
 
 previous_time = time.time()
 
@@ -165,9 +168,9 @@ class MainMenu:
     def handle_input(self, events):
         for event in events:
             if event.type == py.KEYDOWN:
-                if event.key == py.K_UP:
+                if event.key in (py.K_UP, py.K_w):
                     self.selected_index = (self.selected_index - 1) % len(self.options)
-                elif event.key == py.K_DOWN:
+                elif event.key in (py.K_DOWN, py.K_s):
                     self.selected_index = (self.selected_index + 1) % len(self.options)
                 elif event.key in (py.K_SPACE, py.K_RETURN):
                     if self.selected_index == 0:
@@ -213,9 +216,9 @@ class LevelSelect:
     def handle_input(self, events):
         for event in events:
             if event.type == py.KEYDOWN:
-                if event.key == py.K_UP:
+                if event.key in (py.K_UP, py.K_w):
                     self.selected_index = (self.selected_index - 1) % len(self.options)
-                elif event.key == py.K_DOWN:
+                elif event.key in (py.K_DOWN, py.K_s):
                     self.selected_index = (self.selected_index + 1) % len(self.options)
                 elif event.key == py.K_ESCAPE:
                     self.gameStateManager.set_state('main_menu')
@@ -279,9 +282,9 @@ class Settings:
     def handle_input(self, events):
         for event in events:
             if event.type == py.KEYDOWN:
-                if event.key == py.K_UP:
+                if event.key in (py.K_UP, py.K_w):
                     self.selected_index = (self.selected_index - 1) % len(self.options)
-                elif event.key == py.K_DOWN:
+                elif event.key in (py.K_DOWN, py.K_s):
                     self.selected_index = (self.selected_index + 1) % len(self.options)
                 elif event.key == py.K_SPACE:
                     if self.selected_index == 0:
@@ -300,13 +303,13 @@ class Settings:
                         self.gameStateManager.set_state('main_menu')
                 elif event.key == py.K_ESCAPE:
                     self.gameStateManager.set_state('main_menu')
-                elif event.key == py.K_LEFT:
+                elif event.key in (py.K_LEFT, py.K_a):
                     if self.selected_index == 0:
                         self.music_volume = max(0, self.music_volume - 5)
                         mixer.music.set_volume(self.music_volume / 100.0)
                     elif self.selected_index == 1:
                         self.sfx_volume = max(0, self.sfx_volume - 5)
-                elif event.key == py.K_RIGHT:
+                elif event.key in (py.K_RIGHT, py.K_d):
                     if self.selected_index == 0:
                         self.music_volume = min(100, self.music_volume + 5)
                         mixer.music.set_volume(self.music_volume / 100.0)
@@ -415,6 +418,13 @@ class Level:
         rotated_image = py.transform.rotate(image, angle)
         rotated_rect = rotated_image.get_rect(center=rotated_center)
         return rotated_image, rotated_rect
+
+    def take_damage(self):
+        self.hit_timer = HIT_TIMEOUT_DURATION
+        self.survival_timer = 0.0
+        self.health = max(0, self.health - 1)
+        if self.health <= 0:
+            self.gameStateManager.set_state('level1_lose')
 
 # action library
     def _fire_single_bullet(self, b_params):
@@ -637,7 +647,9 @@ class Level:
 
         self.score = 0
         self.score_accum = 0.0
+        self.survival_timer = 0.0
         self.graze_score = 0
+        self.health = PLAYER_MAX_HEALTH
         self.enemy_x = float(self.level_data.get("enemy_x", 280))
         self.enemy_y = float(self.level_data.get("enemy_y", 80))
 
@@ -700,20 +712,26 @@ class Level:
         if not self.music_started:
             mixer.music.load(self.music_path)
             mixer.music.set_volume(self.settings.music_volume / 100.0)
-            mixer.music.play(-1)
+            mixer.music.play(0)
             self.music_started = True
 
         if self.music_started:
             self.level_time += dt
 
+        if self.music_started and self.level_time > 0.2 and self.health > 0 and not mixer.music.get_busy():
+            self.gameStateManager.set_state('level1_win')
+
         if self.hit_timer > 0:
             self.hit_timer = max(0.0, self.hit_timer - dt)
 
-        self.score_accum += SURVIVAL_SCORE_RATE * dt
-        tick_score = int(self.score_accum)
-        if tick_score > 0 and self.hit_timer <= 0:
-            self.score += tick_score
-            self.score_accum -= tick_score
+        if self.hit_timer <= 0:
+            self.survival_timer += dt
+            rate_multiplier = 2 ** (self.survival_timer / SURVIVAL_SCORE_DOUBLE_TIME)
+            self.score_accum += SURVIVAL_SCORE_RATE * rate_multiplier * dt
+            tick_score = int(self.score_accum)
+            if tick_score > 0:
+                self.score += tick_score
+                self.score_accum -= tick_score
 
         for spawner in self.active_spawners[:]:
             spawner["timer"] -= dt
@@ -780,28 +798,32 @@ class Level:
                 self.enemy_movement_mode = "idle"
 
         keys = py.key.get_pressed()
+        right_pressed = keys[py.K_RIGHT] or keys[py.K_d]
+        left_pressed = keys[py.K_LEFT] or keys[py.K_a]
+        up_pressed = keys[py.K_UP] or keys[py.K_w]
+        down_pressed = keys[py.K_DOWN] or keys[py.K_s]
 
-        if (keys[py.K_RIGHT] and keys[py.K_UP]) or (keys[py.K_RIGHT] and keys[py.K_DOWN]) or (keys[py.K_LEFT] and keys[py.K_UP]) or (keys[py.K_LEFT] and keys[py.K_DOWN]):
+        if (right_pressed and up_pressed) or (right_pressed and down_pressed) or (left_pressed and up_pressed) or (left_pressed and down_pressed):
             self.player_speed = round(self.BASE_SPEED * 0.707)
         else:
             self.player_speed = self.BASE_SPEED
 
-        if keys[py.K_LEFT] and self.player.left > 50:
+        if left_pressed and self.player.left > 50:
             self.player_x -= self.player_speed * dt
             self.player.x = round(self.player_x)
             if self.player.left < 50:
                 self.player.x = 50
-        if keys[py.K_RIGHT] and self.player.right < 550:
+        if right_pressed and self.player.right < 550:
             self.player_x += self.player_speed * dt
             self.player.x = round(self.player_x)
             if self.player.right > 550:
                 self.player.x = 550 - self.player_width
-        if keys[py.K_UP] and self.player.top > 50:
+        if up_pressed and self.player.top > 50:
             self.player_y -= self.player_speed * dt
             self.player.y = round(self.player_y)
             if self.player.top < 50:
                 self.player.y = 50
-        if keys[py.K_DOWN] and self.player.bottom < 550:
+        if down_pressed and self.player.bottom < 550:
             self.player_y += self.player_speed * dt
             self.player.y = round(self.player_y)
             if self.player.bottom > 550:
@@ -871,7 +893,7 @@ class Level:
             if red_t >= 1.0 and self.hit_timer <= 0:
                 blade_mask = py.mask.from_surface(rotated_red)
                 if self.player_mask.overlap(blade_mask, (red_rect.x - self.player.x, red_rect.y - self.player.y)):
-                    self.hit_timer = HIT_TIMEOUT_DURATION
+                    self.take_damage()
 
         for b in self.player_bullets[:]:
             b[1] -= self.player_bullet_speed * dt
@@ -958,7 +980,7 @@ class Level:
 
             if self.hit_timer <= 0:
                 if self.player_mask.overlap(b_mask, (offset_x, offset_y)):
-                    self.hit_timer = HIT_TIMEOUT_DURATION
+                    self.take_damage()
                 else:
                     graze_x = int(b["x"] - b["width"] / 2 - (self.player.x + self.player_width / 2 - self.graze_radius))
                     graze_y = int(b["y"] - b["height"] / 2 - (self.player.y + self.player_width / 2 - self.graze_radius))
@@ -974,7 +996,7 @@ class Level:
             enemy_offset_x = int(self.enemy_x - self.player.x)
             enemy_offset_y = int(self.enemy_y - self.player.y)
             if self.player_mask.overlap(enemy_mask, (enemy_offset_x, enemy_offset_y)):
-                self.hit_timer = HIT_TIMEOUT_DURATION
+                self.take_damage()
 
         for b in self.enemy_bullets:
             if b["image"] is not None:
@@ -988,15 +1010,22 @@ class Level:
 
         self.display.blit(border_img, (0, 0))
 
-        score_surf = self.title_font.render(f"SCORE:", True, FONT_COLOR)
+        hud_color = HUD_DISABLED_COLOR if self.hit_timer > 0 else FONT_COLOR
+
+        score_surf = self.title_font.render(f"SCORE:", True, hud_color)
         screen.blit(score_surf, (585, 116))
-        score_surf_main = self.subtitle_font.render(f"{self.score:07d}", True, FONT_COLOR)
+        score_surf_main = self.subtitle_font.render(f"{self.score:07d}", True, hud_color)
         screen.blit(score_surf_main, (720, 120))
 
-        graze_surf = self.title_font.render(f"GRAZE:", True, FONT_COLOR)
+        graze_surf = self.title_font.render(f"GRAZE:", True, hud_color)
         screen.blit(graze_surf, (585, 156))
-        graze_surf_main = self.subtitle_font.render(f"{self.graze_score}", True, FONT_COLOR)
+        graze_surf_main = self.subtitle_font.render(f"{self.graze_score}", True, hud_color)
         screen.blit(graze_surf_main, (720, 160))
+
+        health_surf = self.title_font.render(f"HEALTH:", True, FONT_COLOR)
+        screen.blit(health_surf, (585, 196))
+        health_surf_main = self.subtitle_font.render(f"{self.health}", True, FONT_COLOR)
+        screen.blit(health_surf_main, (720, 200))
 
         if DEBUG:
             debug_text = font.render(
@@ -1011,6 +1040,53 @@ class Level:
             screen.blit(debug_left, (620, 60))
             debug_bottom = font.render(f"{self.player.bottom}", True, FONT_COLOR)
             screen.blit(debug_bottom, (660, 100))
+
+class LevelResultScreen:
+    def __init__(self, display, gameStateManager, level_ref, title_text):
+        self.display = display
+        self.gameStateManager = gameStateManager
+        self.level_ref = level_ref
+        self.title_text = title_text
+        self.options = ["RETRY", "LEAVE"]
+        self.selected_index = 0
+
+        self.title_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 50)
+        self.option_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
+
+    def on_enter(self):
+        self.selected_index = 0
+
+    def handle_input(self, events):
+        for event in events:
+            if event.type == py.KEYDOWN:
+                if event.key in (py.K_UP, py.K_w, py.K_DOWN, py.K_s):
+                    self.selected_index = (self.selected_index + 1) % len(self.options)
+                elif event.key in (py.K_SPACE, py.K_RETURN):
+                    if self.selected_index == 0:
+                        self.gameStateManager.set_state('levelone')
+                    else:
+                        self.gameStateManager.set_state('level_select')
+
+    def run(self, dt):
+        self.display.fill(BACKGROUND_COLOR)
+
+        title_surf = self.title_font.render(self.title_text, True, FONT_COLOR)
+        self.display.blit(title_surf, (SCREEN_WIDTH / 2 - title_surf.get_width() / 2, 200))
+
+        for i, option in enumerate(self.options):
+            is_selected = (i == self.selected_index)
+
+            if is_selected:
+                text_str = f"<{option}>"
+                color = (255, 255, 255)
+            else:
+                text_str = option
+                color = FONT_COLOR
+
+            opt_surf = self.option_font.render(text_str, True, color)
+            opt_x = SCREEN_WIDTH / 2 - opt_surf.get_width() / 2
+            opt_y = 480 + i * 40
+            self.display.blit(opt_surf, (opt_x, opt_y))
 
 class Menu:
     def __init__(self, display, gameStateManager):
@@ -1032,13 +1108,17 @@ class Game:
         self.splash = Splash(self.screen, self.gameStateManager)
         self.main_menu = MainMenu(self.screen, self.gameStateManager)
         self.level_select = LevelSelect(self.screen, self.gameStateManager, self.levelone)
+        self.level1_win = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "LEVEL CLEAR")
+        self.level1_lose = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "GAME OVER")
 
         self.states = {
             'splash': self.splash,
             'main_menu': self.main_menu,
             'level_select': self.level_select,
             'settings': self.settings,
-            'levelone': self.levelone
+            'levelone': self.levelone,
+            'level1_win': self.level1_win,
+            'level1_lose': self.level1_lose
         }
 
         self.gameStateManager.register_states(self.states)
