@@ -1,4 +1,4 @@
-import pygame as py, time, sys, json, math
+import pygame as py, time, sys, json, math, csv, os
 from pygame import mixer
 
 py.init()
@@ -76,6 +76,144 @@ PLAYER_MAX_HEALTH = 8
 DAMAGE_PENALTY_PER_HIT = 1000
 
 previous_time = time.time()
+
+STATISTICS_CSV_PATH = "statistics.csv"
+STATISTICS_FIELDNAMES = ["level", "rank", "highscore", "plays"]
+RANK_ORDER = ["HAKU", "MEI", "GUTSU", "KUU", "SHII", "NONE"]
+
+# Edit this to change the boss name shown on the level select screen.
+LEVEL_BOSS_NAMES = {
+    "level1": "Sheru",
+    "level2": "Kiero",
+    "level3": "NAME",
+    "level4": "NAME",
+    "level5": "NAME",
+}
+
+# Add a path here once a boss portrait exists for a level; missing files are
+# skipped silently so this is safe to fill in ahead of time.
+LEVEL_BOSS_IMAGE_PATHS = {
+    "level1": "assets/entities/boss_level1.png",
+    "level2": "assets/entities/boss_level2.png",
+    "level3": "assets/entities/boss_level3.png",
+    "level4": "assets/entities/boss_level4.png",
+    "level5": "assets/entities/boss_level5.png",
+}
+
+# Tweak position/font/size/color independently for each level's stat panel
+# on the level select screen. Index 0 = LEVEL 1, index 1 = LEVEL 2, etc.
+LEVEL_STAT_DISPLAY_CONFIG = [
+    {
+        "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
+        "font_size": 24,
+        "color": (214, 255, 255),
+        "rank_pos": (560, 230),
+        "highscore_pos": (560, 268),
+        "plays_pos": (560, 306),
+        "boss_name_pos": (560, 360),
+        "boss_image_pos": (560, 400),
+    },
+    {
+        "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
+        "font_size": 24,
+        "color": (214, 255, 255),
+        "rank_pos": (560, 230),
+        "highscore_pos": (560, 268),
+        "plays_pos": (560, 306),
+        "boss_name_pos": (560, 360),
+        "boss_image_pos": (560, 400),
+    },
+    {
+        "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
+        "font_size": 24,
+        "color": (214, 255, 255),
+        "rank_pos": (560, 230),
+        "highscore_pos": (560, 268),
+        "plays_pos": (560, 306),
+        "boss_name_pos": (560, 360),
+        "boss_image_pos": (560, 400),
+    },
+    {
+        "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
+        "font_size": 24,
+        "color": (214, 255, 255),
+        "rank_pos": (560, 230),
+        "highscore_pos": (560, 268),
+        "plays_pos": (560, 306),
+        "boss_name_pos": (560, 360),
+        "boss_image_pos": (560, 400),
+    },
+    {
+        "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
+        "font_size": 24,
+        "color": (214, 255, 255),
+        "rank_pos": (560, 230),
+        "highscore_pos": (560, 268),
+        "plays_pos": (560, 306),
+        "boss_name_pos": (560, 360),
+        "boss_image_pos": (560, 400),
+    },
+]
+
+class StatisticsManager:
+    def __init__(self, filepath=STATISTICS_CSV_PATH, level_keys=None):
+        self.filepath = filepath
+        self.level_keys = level_keys or ["level1", "level2", "level3", "level4", "level5"]
+        self.data = {}
+        self._load()
+
+    def _default_row(self):
+        return {"rank": "NONE", "highscore": 0, "plays": 0}
+
+    def _load(self):
+        if os.path.exists(self.filepath):
+            with open(self.filepath, newline="") as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    key = row.get("level")
+                    if not key:
+                        continue
+                    self.data[key] = {
+                        "rank": row.get("rank", "NONE") or "NONE",
+                        "highscore": int(row.get("highscore", 0) or 0),
+                        "plays": int(row.get("plays", 0) or 0)
+                    }
+
+        for key in self.level_keys:
+            if key not in self.data:
+                self.data[key] = self._default_row()
+
+        self._save()
+
+    def _save(self):
+        with open(self.filepath, "w", newline="") as file:
+            writer = csv.DictWriter(file, fieldnames=STATISTICS_FIELDNAMES)
+            writer.writeheader()
+            for key in self.level_keys:
+                row = self.data[key]
+                writer.writerow({
+                    "level": key,
+                    "rank": row["rank"],
+                    "highscore": row["highscore"],
+                    "plays": row["plays"]
+                })
+
+    def get(self, level_key):
+        return self.data.get(level_key, self._default_row())
+
+    def record_play(self, level_key):
+        row = self.data.setdefault(level_key, self._default_row())
+        row["plays"] += 1
+        self._save()
+
+    def record_result(self, level_key, score, rank):
+        row = self.data.setdefault(level_key, self._default_row())
+        if score > row["highscore"]:
+            row["highscore"] = score
+        current_rank = row["rank"] if row["rank"] in RANK_ORDER else "NONE"
+        if rank in RANK_ORDER and RANK_ORDER.index(rank) < RANK_ORDER.index(current_rank):
+            row["rank"] = rank
+        self._save()
 
 # logic
 class GameStateManager:
@@ -224,15 +362,35 @@ class MainMenu:
             self.display.blit(opt_surf, (x_pos, y_pos))
 
 class LevelSelect:
-    def __init__(self, display, gameStateManager, level_ref):
+    def __init__(self, display, gameStateManager, level_ref, stats_manager, level_keys):
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_ref = level_ref
+        self.stats_manager = stats_manager
+        self.level_keys = level_keys
         self.options = ["LEVEL 1", "LEVEL 2", "LEVEL 3", "LEVEL 4", "LEVEL 5", "BACK"]
         self.selected_index = 0
 
         self.level_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 35)
         self.esc_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
+
+        self._stat_font_cache = {}
+        self._boss_image_cache = {}
+
+    def _get_stat_font(self, font_path, font_size):
+        cache_key = (font_path, font_size)
+        if cache_key not in self._stat_font_cache:
+            self._stat_font_cache[cache_key] = py.font.Font(font_path, font_size)
+        return self._stat_font_cache[cache_key]
+
+    def _get_boss_image(self, level_key):
+        if level_key not in self._boss_image_cache:
+            image = None
+            path = LEVEL_BOSS_IMAGE_PATHS.get(level_key)
+            if path and os.path.exists(path):
+                image = py.image.load(path).convert_alpha()
+            self._boss_image_cache[level_key] = image
+        return self._boss_image_cache[level_key]
 
     def on_enter(self):
         self.selected_index = 0
@@ -286,6 +444,30 @@ class LevelSelect:
         esc_x = 81 - esc_surf.get_width() // 2
         esc_y = 546
         self.display.blit(esc_surf, (esc_x, esc_y))
+
+        if self.selected_index < len(self.level_keys):
+            level_key = self.level_keys[self.selected_index]
+            config = LEVEL_STAT_DISPLAY_CONFIG[self.selected_index]
+            stats = self.stats_manager.get(level_key)
+            stat_font = self._get_stat_font(config["font_path"], config["font_size"])
+            color = config["color"]
+
+            rank_surf = stat_font.render(stats["rank"], True, color)
+            self.display.blit(rank_surf, config["rank_pos"])
+
+            highscore_surf = stat_font.render(f"HIGHSCORE: {stats['highscore']:07d}", True, color)
+            self.display.blit(highscore_surf, config["highscore_pos"])
+
+            plays_surf = stat_font.render(f"PLAYS: {stats['plays']}", True, color)
+            self.display.blit(plays_surf, config["plays_pos"])
+
+            boss_name = LEVEL_BOSS_NAMES.get(level_key, "???")
+            boss_name_surf = stat_font.render(boss_name, True, color)
+            self.display.blit(boss_name_surf, config["boss_name_pos"])
+
+            boss_image = self._get_boss_image(level_key)
+            if boss_image is not None:
+                self.display.blit(boss_image, config["boss_image_pos"])
 
 class Settings:
     def __init__(self, display, gameStateManager):
@@ -378,12 +560,14 @@ class Settings:
         self.display.blit(esc_surf, (esc_x, esc_y))
 
 class Level:
-    def __init__(self, display, gameStateManager, level_file, settings_ref, rank_thresholds=None):
+    def __init__(self, display, gameStateManager, level_file, settings_ref, rank_thresholds=None, level_key=None, stats_manager=None):
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_file = level_file
         self.settings = settings_ref
         self.rank_thresholds = rank_thresholds
+        self.level_key = level_key
+        self.stats_manager = stats_manager
 
         with open(self.level_file, "r") as file:
             self.level_data = json.load(file)
@@ -635,6 +819,8 @@ class Level:
 
     def on_enter(self):
         self.reset_level()
+        if self.stats_manager is not None and self.level_key is not None:
+            self.stats_manager.record_play(self.level_key)
 
     def on_exit(self):
         mixer.music.stop()
@@ -1064,7 +1250,7 @@ class Level:
                 screen.blit(halfheart_img, (730 + i * 30, 230))
 
 class LevelResultScreen:
-    def __init__(self, display, gameStateManager, level_ref, title_text, music_path=None, show_rating=False, background_img=None):
+    def __init__(self, display, gameStateManager, level_ref, title_text, music_path=None, show_rating=False, background_img=None, level_key=None, stats_manager=None):
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_ref = level_ref
@@ -1072,13 +1258,15 @@ class LevelResultScreen:
         self.music_path = music_path
         self.show_rating = show_rating
         self.background_img = background_img
+        self.level_key = level_key
+        self.stats_manager = stats_manager
         self.options = ["RETRY", "LEAVE"]
         self.selected_index = 0
 
         self.title_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 50)
         self.option_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
         self.stat_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 28)
-        self.stat_font_small = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 18)
+        self.stat_font_small = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 16)
         self.stat_small_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 18)
         self.equation_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 26)
         self.rank_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 35)
@@ -1090,6 +1278,9 @@ class LevelResultScreen:
         if self.music_path:
             mixer.music.load(self.music_path)
             mixer.music.play(0)
+        if self.show_rating and self.stats_manager is not None and self.level_key is not None:
+            _, _, _, _, _, final_score, rank = self._compute_rating()
+            self.stats_manager.record_result(self.level_key, final_score, rank)
 
     def _compute_rating(self):
         score = self.level_ref.score
@@ -1209,6 +1400,9 @@ class Game:
 
         self.gameStateManager = GameStateManager('main_menu')
 
+        self.level_keys = ["level1", "level2", "level3", "level4", "level5"]
+        self.stats_manager = StatisticsManager(level_keys=self.level_keys)
+
         self.settings = Settings(self.screen, self.gameStateManager)
         self.levelone = Level(self.screen, self.gameStateManager, "levels/level_one_sheru.json", self.settings, rank_thresholds=[
             ("HAKU", 70000),
@@ -1216,12 +1410,12 @@ class Game:
             ("GUTSU", 35000),
             ("KUU", 15000),
             ("SHII", 0)
-        ])
+        ], level_key="level1", stats_manager=self.stats_manager)
         self.splash = Splash(self.screen, self.gameStateManager)
         self.main_menu = MainMenu(self.screen, self.gameStateManager)
-        self.level_select = LevelSelect(self.screen, self.gameStateManager, self.levelone)
-        self.level1_win = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "LEVEL CLEAR", show_rating=True, background_img=win_level_bg_img)
-        self.level1_lose = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "GAME OVER", "assets/audio/level_lose.ogg", background_img=lose_level_bg_img)
+        self.level_select = LevelSelect(self.screen, self.gameStateManager, self.levelone, self.stats_manager, self.level_keys)
+        self.level1_win = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "LEVEL CLEAR", show_rating=True, background_img=win_level_bg_img, level_key="level1", stats_manager=self.stats_manager)
+        self.level1_lose = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "GAME OVER", "assets/audio/level_lose.ogg", background_img=lose_level_bg_img, level_key="level1", stats_manager=self.stats_manager)
 
         self.states = {
             'splash': self.splash,
