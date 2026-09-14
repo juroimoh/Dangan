@@ -1228,7 +1228,7 @@ class Level:
 
         self.display.blit(border_img, (0, 0))
 
-        hud_color = HUD_DISABLED_COLOR if self.hit_timer > 0 else FONT_COLOR
+        hud_color = HUD_DISABLED_COLOR if self.hit_timer > 0 else (226, 190, 189)
 
         score_surf = self.title_font.render(f"SCORE:", True, hud_color)
         screen.blit(score_surf, (585, 116))
@@ -1240,14 +1240,14 @@ class Level:
         graze_surf_main = self.subtitle_font.render(f"{self.graze_score}", True, hud_color)
         screen.blit(graze_surf_main, (720, 160))
 
-        health_surf = self.title_font.render(f"HEALTH:", True, FONT_COLOR)
+        health_surf = self.title_font.render(f"PLAYER:", True, (226, 190, 189))
         screen.blit(health_surf, (585, 226))
         for i in range(4):
             heart_remaining = self.health - (3 - i) * 2
             if heart_remaining >= 2:
-                screen.blit(fullheart_img, (730 + i * 30, 230))
+                screen.blit(fullheart_img, (740 + i * 30, 230))
             elif heart_remaining == 1:
-                screen.blit(halfheart_img, (730 + i * 30, 230))
+                screen.blit(halfheart_img, (740 + i * 30, 230))
 
 class LevelResultScreen:
     def __init__(self, display, gameStateManager, level_ref, title_text, music_path=None, show_rating=False, background_img=None, level_key=None, stats_manager=None):
