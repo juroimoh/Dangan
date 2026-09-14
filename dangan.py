@@ -1449,7 +1449,15 @@ class Game:
 
         self.settings = Settings(self.screen, self.gameStateManager)
 
-        default_rank_thresholds = [
+        rank_thresholds_1 = [
+            ("HAKU", 70000),
+            ("MEI", 60000),
+            ("GUTSU", 35000),
+            ("KUU", 15000),
+            ("SHII", 0)
+        ]
+
+        rank_thresholds_2 = [
             ("HAKU", 70000),
             ("MEI", 60000),
             ("GUTSU", 35000),
@@ -1459,12 +1467,12 @@ class Game:
 
         self.level1 = Level(self.screen, self.gameStateManager, "levels/level_one_sheru.json", self.settings,
             enemy_image_path="assets/entities/sheru_mini.png",
-            rank_thresholds=default_rank_thresholds,
+            rank_thresholds=rank_thresholds_1,
             level_key="level1", stats_manager=self.stats_manager)
 
         self.level2 = Level(self.screen, self.gameStateManager, "levels/level_two_kiero.json", self.settings,
             enemy_image_path="assets/entities/kiero_mini.png",
-            rank_thresholds=default_rank_thresholds,
+            rank_thresholds=rank_thresholds_2,
             level_key="level2", stats_manager=self.stats_manager)
 
         self.splash = Splash(self.screen, self.gameStateManager)
