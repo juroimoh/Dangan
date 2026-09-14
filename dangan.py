@@ -35,6 +35,33 @@ kuu_img = py.image.load("assets/entities/kuu.png").convert_alpha()
 shii_img = py.image.load("assets/entities/shii.png").convert_alpha()
 RANK_IMAGES = {"HAKU": haku_img, "MEI": mei_img, "GUTSU": gutsu_img, "KUU": kuu_img, "SHII": shii_img}
 
+keyboard_w_unpressed_img = py.image.load("assets/entities/keyboard_w_unpressed.png").convert_alpha()
+keyboard_w_pressed_img = py.image.load("assets/entities/keyboard_w_pressed.png").convert_alpha()
+keyboard_a_unpressed_img = py.image.load("assets/entities/keyboard_a_unpressed.png").convert_alpha()
+keyboard_a_pressed_img = py.image.load("assets/entities/keyboard_a_pressed.png").convert_alpha()
+keyboard_s_unpressed_img = py.image.load("assets/entities/keyboard_s_unpressed.png").convert_alpha()
+keyboard_s_pressed_img = py.image.load("assets/entities/keyboard_s_pressed.png").convert_alpha()
+keyboard_d_unpressed_img = py.image.load("assets/entities/keyboard_d_unpressed.png").convert_alpha()
+keyboard_d_pressed_img = py.image.load("assets/entities/keyboard_d_pressed.png").convert_alpha()
+keyboard_space_unpressed_img = py.image.load("assets/entities/keyboard_space_unpressed.png").convert_alpha()
+keyboard_space_pressed_img = py.image.load("assets/entities/keyboard_space_pressed.png").convert_alpha()
+
+KEY_DISPLAY_IMAGES = {
+    "w": (keyboard_w_unpressed_img, keyboard_w_pressed_img),
+    "a": (keyboard_a_unpressed_img, keyboard_a_pressed_img),
+    "s": (keyboard_s_unpressed_img, keyboard_s_pressed_img),
+    "d": (keyboard_d_unpressed_img, keyboard_d_pressed_img),
+    "space": (keyboard_space_unpressed_img, keyboard_space_pressed_img),
+}
+
+KEY_DISPLAY_POSITIONS = {
+    "w": (775, 462),
+    "a": (730, 507),
+    "s": (775, 507),
+    "d": (820, 507),
+    "space": (575, 507),
+}
+
 PLAYER_HITBOX_INSET = 1
 
 def _build_player_hitbox_mask(image, inset):
@@ -1356,6 +1383,18 @@ class Level:
                 screen.blit(fullheart_img, (740 + i * 30, 230))
             elif heart_remaining == 1:
                 screen.blit(halfheart_img, (740 + i * 30, 230))
+
+        key_states = {
+            "w": up_pressed,
+            "a": left_pressed,
+            "s": down_pressed,
+            "d": right_pressed,
+            "space": keys[py.K_SPACE],
+        }
+        for key_name, is_pressed in key_states.items():
+            unpressed_img, pressed_img = KEY_DISPLAY_IMAGES[key_name]
+            key_img = pressed_img if is_pressed else unpressed_img
+            screen.blit(key_img, KEY_DISPLAY_POSITIONS[key_name])
 
 class LevelResultScreen:
     def __init__(self, display, gameStateManager, level_ref, title_text, music_path=None, show_rating=False, background_img=None, level_key=None, stats_manager=None):
