@@ -96,7 +96,7 @@ DEBUG_TEST_HEALTH = 8
 HIT_TIMEOUT_DURATION = 2.0
 HIT_FADE_WINDOW = 0.4
 SURVIVAL_SCORE_RATE = 40.0
-SURVIVAL_SCORE_DOUBLE_TIME = 15.0
+SURVIVAL_SCORE_DOUBLE_TIME = 12 # 15 originally
 SPINNING_BLADE_INACTIVE_ALPHA = 45
 PLAYER_MAX_HEALTH = 8
 DAMAGE_PENALTY_PER_HIT = 1000
@@ -1097,7 +1097,7 @@ class Level:
 
         if self.hit_timer <= 0:
             self.survival_timer += dt
-            rate_multiplier = 2 ** (self.survival_timer / SURVIVAL_SCORE_DOUBLE_TIME)
+            rate_multiplier = 2.3 ** (self.survival_timer / SURVIVAL_SCORE_DOUBLE_TIME)
             self.score_accum += SURVIVAL_SCORE_RATE * rate_multiplier * dt
             tick_score = int(self.score_accum)
             if tick_score > 0:
@@ -1523,9 +1523,9 @@ class LevelResultScreen:
             self.display.blit(damage_label_surf, (label_x, line1_y + line_height * 2 + 6))
 
             total_surf = self.stat_font.render(f"SCORE: {final_score}", True, (255, 255, 233))
-            deaths_surf = self.stat_font_small.render(f"{damage_taken} DEATHS", True, (213, 203, 183))
-            self.display.blit(total_surf, (equation_x - 53, line1_y + line_height * 3 + 20))
-            self.display.blit(deaths_surf, (equation_x + 138, line1_y + line_height * 3 + total_surf.get_height() + 24))
+            deaths_surf = self.stat_font_small.render(f"{damage_taken} DAMAGE", True, (213, 203, 183))
+            self.display.blit(total_surf, (equation_x - 73, line1_y + line_height * 3 + 20))
+            self.display.blit(deaths_surf, (equation_x + 118, line1_y + line_height * 3 + total_surf.get_height() + 24))
 
             rank_img = RANK_IMAGES[rank]
             RANK_IMAGE_SCALE = 1.3
