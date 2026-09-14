@@ -134,6 +134,7 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "plays_pos": (560, 306),
         "boss_name_pos": (560, 360),
         "boss_image_pos": (560, 400),
+        "locked_message_pos": (560, 268),
     },
     {
         "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
@@ -144,6 +145,7 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "plays_pos": (560, 306),
         "boss_name_pos": (560, 360),
         "boss_image_pos": (560, 400),
+        "locked_message_pos": (560, 268),
     },
     {
         "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
@@ -154,6 +156,7 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "plays_pos": (560, 306),
         "boss_name_pos": (560, 360),
         "boss_image_pos": (560, 400),
+        "locked_message_pos": (560, 268),
     },
     {
         "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
@@ -164,6 +167,7 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "plays_pos": (560, 306),
         "boss_name_pos": (560, 360),
         "boss_image_pos": (560, 400),
+        "locked_message_pos": (560, 268),
     },
 ]
 
@@ -488,26 +492,34 @@ class LevelSelect:
         if self.selected_index < len(self.level_keys):
             level_key = self.level_keys[self.selected_index]
             config = LEVEL_STAT_DISPLAY_CONFIG[self.selected_index]
-            stats = self.stats_manager.get(level_key)
             stat_font = self._get_stat_font(config["font_path"], config["font_size"])
             color = config["color"]
 
-            rank_surf = stat_font.render(stats["rank"], True, color)
-            self.display.blit(rank_surf, config["rank_pos"])
+            if level_key not in self.playable_level_keys:
+                message_surf = stat_font.render("COMING SOON", True, color)
+                self.display.blit(message_surf, config["locked_message_pos"])
+            elif not is_level_unlocked(level_key, self.stats_manager):
+                message_surf = stat_font.render("LOCKED", True, color)
+                self.display.blit(message_surf, config["locked_message_pos"])
+            else:
+                stats = self.stats_manager.get(level_key)
 
-            highscore_surf = stat_font.render(f"HIGHSCORE: {stats['highscore']:07d}", True, color)
-            self.display.blit(highscore_surf, config["highscore_pos"])
+                rank_surf = stat_font.render(stats["rank"], True, color)
+                self.display.blit(rank_surf, config["rank_pos"])
 
-            plays_surf = stat_font.render(f"PLAYS: {stats['plays']}", True, color)
-            self.display.blit(plays_surf, config["plays_pos"])
+                highscore_surf = stat_font.render(f"HIGHSCORE: {stats['highscore']:07d}", True, color)
+                self.display.blit(highscore_surf, config["highscore_pos"])
 
-            boss_name = LEVEL_BOSS_NAMES.get(level_key, "???")
-            boss_name_surf = stat_font.render(boss_name, True, color)
-            self.display.blit(boss_name_surf, config["boss_name_pos"])
+                plays_surf = stat_font.render(f"PLAYS: {stats['plays']}", True, color)
+                self.display.blit(plays_surf, config["plays_pos"])
 
-            boss_image = self._get_boss_image(level_key)
-            if boss_image is not None:
-                self.display.blit(boss_image, config["boss_image_pos"])
+                boss_name = LEVEL_BOSS_NAMES.get(level_key, "???")
+                boss_name_surf = stat_font.render(boss_name, True, color)
+                self.display.blit(boss_name_surf, config["boss_name_pos"])
+
+                boss_image = self._get_boss_image(level_key)
+                if boss_image is not None:
+                    self.display.blit(boss_image, config["boss_image_pos"])
 
 class Settings:
     def __init__(self, display, gameStateManager):
