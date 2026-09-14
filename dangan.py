@@ -21,6 +21,7 @@ levels_fg_img = py.image.load("assets/backgrounds/level_art_front.png").convert_
 options_img = py.image.load("assets/backgrounds/options_art.png").convert_alpha()
 win_level_bg_img = py.image.load("assets/backgrounds/win_level_art.png").convert_alpha()
 lose_level_bg_img = py.image.load("assets/backgrounds/lose_level_art.png").convert_alpha()
+manual_img = py.image.load("assets/backgrounds/manual_art.png").convert_alpha()
 spinningblade_img = py.image.load("assets/entities/blade.png").convert_alpha()
 spinningblade_gray_img = py.transform.grayscale(spinningblade_img)
 spinningblade_red_img = spinningblade_img.copy()
@@ -79,9 +80,6 @@ STATISTICS_CSV_PATH = "statistics.csv"
 STATISTICS_FIELDNAMES = ["level", "rank", "highscore", "plays"]
 RANK_ORDER = ["HAKU", "MEI", "GUTSU", "KUU", "SHII", "NONE"]
 
-# Which level unlocks which. None = always unlocked. Otherwise (required_level_key,
-# required_rank) means that level's best rank must be required_rank or better.
-# Add an entry here whenever a new level is added.
 LEVEL_UNLOCK_REQUIREMENTS = {
     "level1": None,
     "level2": ("level1", "GUTSU"),
@@ -100,7 +98,6 @@ def is_level_unlocked(level_key, stats_manager):
         return False
     return RANK_ORDER.index(current_rank) <= RANK_ORDER.index(required_rank)
 
-# Edit this to change the boss name shown on the level select screen.
 LEVEL_BOSS_NAMES = {
     "level1": "Sheru",
     "level2": "Kiero",
@@ -109,8 +106,6 @@ LEVEL_BOSS_NAMES = {
     "level5": "NAME",
 }
 
-# Add a path here once a boss portrait exists for a level; missing files are
-# skipped silently so this is safe to fill in ahead of time.
 LEVEL_BOSS_IMAGE_PATHS = {
     "level1": "assets/entities/boss_level1.png",
     "level2": "assets/entities/boss_level2.png",
@@ -119,8 +114,6 @@ LEVEL_BOSS_IMAGE_PATHS = {
     "level5": "assets/entities/boss_level5.png",
 }
 
-# Tweak position/font/size/color independently for each level's stat panel
-# on the level select screen. Index 0 = LEVEL 1, index 1 = LEVEL 2, etc.
 LEVEL_STAT_DISPLAY_CONFIG = [
     {
         "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
@@ -239,7 +232,7 @@ class GameStateManager:
     def __init__(self, currentState):
         self.currentState = currentState
         self.states = {}
-        self.menu_states = {'splash', 'main_menu', 'level_select', 'settings'}
+        self.menu_states = {'splash', 'main_menu', 'level_select', 'settings', 'manual'}
         self.menu_music_path = "assets/audio/lobby_music.ogg"
 
         self.is_transitioning = True
@@ -339,7 +332,7 @@ class MainMenu:
     def __init__(self, display, gameStateManager):
         self.display = display
         self.gameStateManager = gameStateManager
-        self.options = ["LEVEL", "OPTIONS", "QUIT"]
+        self.options = ["LEVEL", "OPTIONS", "MANUAL", "QUIT"]
         self.selected_index = 0
         self.menu_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 45)
 
@@ -359,6 +352,8 @@ class MainMenu:
                     elif self.selected_index == 1:
                         self.gameStateManager.set_state('settings')
                     elif self.selected_index == 2:
+                        self.gameStateManager.set_state('manual')
+                    elif self.selected_index == 3:
                         self.gameStateManager.set_state('quit')
 
     def run(self, dt):
@@ -377,8 +372,28 @@ class MainMenu:
 
             opt_surf = self.menu_font.render(text_str, True, color)
             x_pos = right_x - opt_surf.get_width()
-            y_pos = 410 + i * 60
+            y_pos = 397 + i * 48
             self.display.blit(opt_surf, (x_pos, y_pos))
+
+class Manual:
+    def __init__(self, display, gameStateManager):
+        self.display = display
+        self.gameStateManager = gameStateManager
+        self.esc_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
+
+    def handle_input(self, events):
+        for event in events:
+            if event.type == py.KEYDOWN:
+                if event.key in (py.K_SPACE, py.K_RETURN, py.K_ESCAPE):
+                    self.gameStateManager.set_state('main_menu')
+
+    def run(self, dt):
+        self.display.blit(manual_img, (0, 0))
+
+        back_surf = self.esc_font.render("<BACK>", True, (255, 255, 255))
+        back_x = 81 - back_surf.get_width() // 2
+        back_y = 546
+        self.display.blit(back_surf, (back_x, back_y))
 
 class LevelSelect:
     def __init__(self, display, gameStateManager, level_ref, stats_manager, level_keys, playable_level_keys):
@@ -1454,6 +1469,7 @@ class Game:
 
         self.splash = Splash(self.screen, self.gameStateManager)
         self.main_menu = MainMenu(self.screen, self.gameStateManager)
+        self.manual = Manual(self.screen, self.gameStateManager)
         self.level_select = LevelSelect(self.screen, self.gameStateManager, self.level1, self.stats_manager, self.level_keys, self.playable_level_keys)
 
         self.level1_win = LevelResultScreen(self.screen, self.gameStateManager, self.level1, "LEVEL CLEAR", show_rating=True, background_img=win_level_bg_img, level_key="level1", stats_manager=self.stats_manager)
@@ -1465,6 +1481,7 @@ class Game:
         self.states = {
             'splash': self.splash,
             'main_menu': self.main_menu,
+            'manual': self.manual,
             'level_select': self.level_select,
             'settings': self.settings,
             'level1': self.level1,
