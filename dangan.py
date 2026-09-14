@@ -21,7 +21,6 @@ levels_fg_img = py.image.load("assets/backgrounds/level_art_front.png").convert_
 options_img = py.image.load("assets/backgrounds/options_art.png").convert_alpha()
 win_level_bg_img = py.image.load("assets/backgrounds/win_level_art.png").convert_alpha()
 lose_level_bg_img = py.image.load("assets/backgrounds/lose_level_art.png").convert_alpha()
-enemy_img = py.image.load("assets/entities/sheru_mini.png").convert_alpha()
 spinningblade_img = py.image.load("assets/entities/blade.png").convert_alpha()
 spinningblade_gray_img = py.transform.grayscale(spinningblade_img)
 spinningblade_red_img = spinningblade_img.copy()
@@ -46,7 +45,6 @@ def _build_player_hitbox_mask(image, inset):
 
 player_mask = _build_player_hitbox_mask(player_img, PLAYER_HITBOX_INSET)
 player_bullet_mask = py.mask.from_surface(player_bullet_img)
-enemy_mask = py.mask.from_surface(enemy_img)
 
 player_flash_img = player_img.copy()
 player_flash_img.fill((220, 90, 90, 255), special_flags=py.BLEND_RGBA_MULT)
@@ -80,6 +78,27 @@ previous_time = time.time()
 STATISTICS_CSV_PATH = "statistics.csv"
 STATISTICS_FIELDNAMES = ["level", "rank", "highscore", "plays"]
 RANK_ORDER = ["HAKU", "MEI", "GUTSU", "KUU", "SHII", "NONE"]
+
+# Which level unlocks which. None = always unlocked. Otherwise (required_level_key,
+# required_rank) means that level's best rank must be required_rank or better.
+# Add an entry here whenever a new level is added.
+LEVEL_UNLOCK_REQUIREMENTS = {
+    "level1": None,
+    "level2": ("level1", "GUTSU"),
+    "level3": ("level2", "GUTSU"),
+    "level4": ("level3", "GUTSU"),
+    "level5": ("level4", "GUTSU"),
+}
+
+def is_level_unlocked(level_key, stats_manager):
+    requirement = LEVEL_UNLOCK_REQUIREMENTS.get(level_key)
+    if requirement is None:
+        return True
+    required_level_key, required_rank = requirement
+    current_rank = stats_manager.get(required_level_key)["rank"]
+    if current_rank not in RANK_ORDER or required_rank not in RANK_ORDER:
+        return False
+    return RANK_ORDER.index(current_rank) <= RANK_ORDER.index(required_rank)
 
 # Edit this to change the boss name shown on the level select screen.
 LEVEL_BOSS_NAMES = {
@@ -362,12 +381,13 @@ class MainMenu:
             self.display.blit(opt_surf, (x_pos, y_pos))
 
 class LevelSelect:
-    def __init__(self, display, gameStateManager, level_ref, stats_manager, level_keys):
+    def __init__(self, display, gameStateManager, level_ref, stats_manager, level_keys, playable_level_keys):
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_ref = level_ref
         self.stats_manager = stats_manager
         self.level_keys = level_keys
+        self.playable_level_keys = playable_level_keys
         self.options = ["LEVEL 1", "LEVEL 2", "LEVEL 3", "LEVEL 4", "LEVEL 5", "BACK"]
         self.selected_index = 0
 
@@ -392,6 +412,9 @@ class LevelSelect:
             self._boss_image_cache[level_key] = image
         return self._boss_image_cache[level_key]
 
+    def _is_level_clickable(self, level_key):
+        return level_key in self.playable_level_keys and is_level_unlocked(level_key, self.stats_manager)
+
     def on_enter(self):
         self.selected_index = 0
 
@@ -405,8 +428,10 @@ class LevelSelect:
                 elif event.key == py.K_ESCAPE:
                     self.gameStateManager.set_state('main_menu')
                 elif event.key in (py.K_SPACE, py.K_RETURN):
-                    if self.selected_index == 0:
-                        self.gameStateManager.set_state('levelone')
+                    if self.selected_index < len(self.level_keys):
+                        level_key = self.level_keys[self.selected_index]
+                        if self._is_level_clickable(level_key):
+                            self.gameStateManager.set_state(level_key)
                     elif self.selected_index == 5:
                         self.gameStateManager.set_state('main_menu')
 
@@ -418,7 +443,7 @@ class LevelSelect:
         for i in range(5):
             option = self.options[i]
             is_selected = (i == self.selected_index)
-            is_clickable = (i == 0)
+            is_clickable = self._is_level_clickable(self.level_keys[i])
 
             if is_selected:
                 text_str = f"<{option}>"
@@ -560,7 +585,7 @@ class Settings:
         self.display.blit(esc_surf, (esc_x, esc_y))
 
 class Level:
-    def __init__(self, display, gameStateManager, level_file, settings_ref, rank_thresholds=None, level_key=None, stats_manager=None):
+    def __init__(self, display, gameStateManager, level_file, settings_ref, enemy_image_path, rank_thresholds=None, level_key=None, stats_manager=None):
         self.display = display
         self.gameStateManager = gameStateManager
         self.level_file = level_file
@@ -568,6 +593,9 @@ class Level:
         self.rank_thresholds = rank_thresholds
         self.level_key = level_key
         self.stats_manager = stats_manager
+
+        self.enemy_img = py.image.load(enemy_image_path).convert_alpha()
+        self.enemy_mask = py.mask.from_surface(self.enemy_img)
 
         with open(self.level_file, "r") as file:
             self.level_data = json.load(file)
@@ -630,12 +658,12 @@ class Level:
         self.health = max(0, self.health - 1)
         self.damage_taken += 1
         if self.health <= 0:
-            self.gameStateManager.set_state('level1_lose')
+            self.gameStateManager.set_state(f"{self.level_key}_lose")
 
 # action library
     def _fire_single_bullet(self, b_params):
-        x = b_params.get("x", self.enemy_x + enemy_img.get_width() / 2)
-        y = b_params.get("y", self.enemy_y + enemy_img.get_height() / 2)
+        x = b_params.get("x", self.enemy_x + self.enemy_img.get_width() / 2)
+        y = b_params.get("y", self.enemy_y + self.enemy_img.get_height() / 2)
         speed = b_params.get("speed", 200)
         angle = b_params.get("angle", 90) # Default 90 degrees = straight down
         radius = b_params.get("radius", 6)
@@ -696,8 +724,8 @@ class Level:
             self._fire_single_bullet(event)
 
     def _fire_spread_payload(self, event):
-        x = event.get("x", self.enemy_x + enemy_img.get_width() / 2)
-        y = event.get("y", self.enemy_y + enemy_img.get_height() / 2)
+        x = event.get("x", self.enemy_x + self.enemy_img.get_width() / 2)
+        y = event.get("y", self.enemy_y + self.enemy_img.get_height() / 2)
         count = event.get("count", 5)
         spread_angle = event.get("spread_angle", 60.0)
         base_angle = event.get("base_angle", 90.0)
@@ -732,8 +760,8 @@ class Level:
             self._fire_spread_payload(event)
 
     def _fire_ring_payload(self, event):
-        x = event.get("x", self.enemy_x + enemy_img.get_width() / 2)
-        y = event.get("y", self.enemy_y + enemy_img.get_height() / 2)
+        x = event.get("x", self.enemy_x + self.enemy_img.get_width() / 2)
+        y = event.get("y", self.enemy_y + self.enemy_img.get_height() / 2)
         count = event.get("count", 12)
         base_angle = event.get("base_angle", 0.0)
 
@@ -894,12 +922,12 @@ class Level:
                     self.score = DEBUG_TEST_SCORE
                     self.graze_score = DEBUG_TEST_GRAZE
                     self.health = DEBUG_TEST_HEALTH
-                    self.gameStateManager.set_state('level1_win')
+                    self.gameStateManager.set_state(f"{self.level_key}_win")
                 elif DEBUG_END_SCREEN_SKIP and event.key == py.K_F2:
                     self.score = DEBUG_TEST_SCORE
                     self.graze_score = DEBUG_TEST_GRAZE
                     self.health = 0
-                    self.gameStateManager.set_state('level1_lose')
+                    self.gameStateManager.set_state(f"{self.level_key}_lose")
 
     def draw_player(self):
         self.display.blit(player_img, (self.player.x, self.player.y))
@@ -909,7 +937,7 @@ class Level:
             self.display.blit(player_flash_img, (self.player.x, self.player.y))
 
     def draw_enemy(self):
-        self.display.blit(enemy_img, (self.enemy_x, self.enemy_y))
+        self.display.blit(self.enemy_img, (self.enemy_x, self.enemy_y))
 
     def draw_player_bullets(self):
         for b in self.player_bullets:
@@ -937,7 +965,7 @@ class Level:
             self.level_time += dt
 
         if self.music_started and self.level_time > 0.2 and self.health > 0 and not mixer.music.get_busy():
-            self.gameStateManager.set_state('level1_win')
+            self.gameStateManager.set_state(f"{self.level_key}_win")
 
         if self.hit_timer > 0:
             self.hit_timer = max(0.0, self.hit_timer - dt)
@@ -1084,11 +1112,11 @@ class Level:
             if spinner["center_x"] is not None:
                 blade_center_x = spinner["center_x"]
             else:
-                blade_center_x = self.enemy_x + enemy_img.get_width() / 2
+                blade_center_x = self.enemy_x + self.enemy_img.get_width() / 2
             if spinner["center_y"] is not None:
                 blade_center_y = spinner["center_y"]
             else:
-                blade_center_y = self.enemy_y + enemy_img.get_height() / 2
+                blade_center_y = self.enemy_y + self.enemy_img.get_height() / 2
 
             fade_in_t = 1.0 if spinner["fade_in_duration"] <= 0 else min(1.0, spinner["spawn_elapsed"] / spinner["fade_in_duration"])
             visibility = fade_in_t * fade_out_t
@@ -1115,7 +1143,7 @@ class Level:
 
         for b in self.player_bullets[:]:
             b[1] -= self.player_bullet_speed * dt
-            if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
+            if self.enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
                 self.score += 100
                 self.player_bullets.remove(b)
                 continue
@@ -1124,7 +1152,7 @@ class Level:
         for b in self.player_bulletsl[:]:
             b[1] -= self.player_bullet_speed * dt
             b[0] -= self.player_bullet_speed / 10 * dt
-            if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
+            if self.enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
                 self.score += 100
                 self.player_bulletsl.remove(b)
                 continue
@@ -1133,7 +1161,7 @@ class Level:
         for b in self.player_bulletsr[:]:
             b[1] -= self.player_bullet_speed * dt
             b[0] += self.player_bullet_speed / 10 * dt
-            if enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
+            if self.enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
                 self.score += 100
                 self.player_bulletsr.remove(b)
                 continue
@@ -1213,7 +1241,7 @@ class Level:
         if self.hit_timer <= 0:
             enemy_offset_x = int(self.enemy_x - self.player.x)
             enemy_offset_y = int(self.enemy_y - self.player.y)
-            if self.player_mask.overlap(enemy_mask, (enemy_offset_x, enemy_offset_y)):
+            if self.player_mask.overlap(self.enemy_mask, (enemy_offset_x, enemy_offset_y)):
                 self.take_damage()
 
         for b in self.enemy_bullets:
@@ -1309,7 +1337,7 @@ class LevelResultScreen:
                     if not self.confirm_ready:
                         continue
                     if self.selected_index == 0:
-                        self.gameStateManager.set_state('levelone')
+                        self.gameStateManager.set_state(self.level_key)
                     else:
                         self.gameStateManager.set_state('level_select')
 
@@ -1401,30 +1429,50 @@ class Game:
         self.gameStateManager = GameStateManager('main_menu')
 
         self.level_keys = ["level1", "level2", "level3", "level4", "level5"]
+        self.playable_level_keys = ["level1", "level2"]
         self.stats_manager = StatisticsManager(level_keys=self.level_keys)
 
         self.settings = Settings(self.screen, self.gameStateManager)
-        self.levelone = Level(self.screen, self.gameStateManager, "levels/level_one_sheru.json", self.settings, rank_thresholds=[
+
+        default_rank_thresholds = [
             ("HAKU", 70000),
             ("MEI", 60000),
             ("GUTSU", 35000),
             ("KUU", 15000),
             ("SHII", 0)
-        ], level_key="level1", stats_manager=self.stats_manager)
+        ]
+
+        self.level1 = Level(self.screen, self.gameStateManager, "levels/level_one_sheru.json", self.settings,
+            enemy_image_path="assets/entities/sheru_mini.png",
+            rank_thresholds=default_rank_thresholds,
+            level_key="level1", stats_manager=self.stats_manager)
+
+        self.level2 = Level(self.screen, self.gameStateManager, "levels/level_two_kiero.json", self.settings,
+            enemy_image_path="assets/entities/kiero_mini.png",
+            rank_thresholds=default_rank_thresholds,
+            level_key="level2", stats_manager=self.stats_manager)
+
         self.splash = Splash(self.screen, self.gameStateManager)
         self.main_menu = MainMenu(self.screen, self.gameStateManager)
-        self.level_select = LevelSelect(self.screen, self.gameStateManager, self.levelone, self.stats_manager, self.level_keys)
-        self.level1_win = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "LEVEL CLEAR", show_rating=True, background_img=win_level_bg_img, level_key="level1", stats_manager=self.stats_manager)
-        self.level1_lose = LevelResultScreen(self.screen, self.gameStateManager, self.levelone, "GAME OVER", "assets/audio/level_lose.ogg", background_img=lose_level_bg_img, level_key="level1", stats_manager=self.stats_manager)
+        self.level_select = LevelSelect(self.screen, self.gameStateManager, self.level1, self.stats_manager, self.level_keys, self.playable_level_keys)
+
+        self.level1_win = LevelResultScreen(self.screen, self.gameStateManager, self.level1, "LEVEL CLEAR", show_rating=True, background_img=win_level_bg_img, level_key="level1", stats_manager=self.stats_manager)
+        self.level1_lose = LevelResultScreen(self.screen, self.gameStateManager, self.level1, "GAME OVER", "assets/audio/level_lose.ogg", background_img=lose_level_bg_img, level_key="level1", stats_manager=self.stats_manager)
+
+        self.level2_win = LevelResultScreen(self.screen, self.gameStateManager, self.level2, "LEVEL CLEAR", show_rating=True, background_img=win_level_bg_img, level_key="level2", stats_manager=self.stats_manager)
+        self.level2_lose = LevelResultScreen(self.screen, self.gameStateManager, self.level2, "GAME OVER", "assets/audio/level_lose.ogg", background_img=lose_level_bg_img, level_key="level2", stats_manager=self.stats_manager)
 
         self.states = {
             'splash': self.splash,
             'main_menu': self.main_menu,
             'level_select': self.level_select,
             'settings': self.settings,
-            'levelone': self.levelone,
+            'level1': self.level1,
             'level1_win': self.level1_win,
-            'level1_lose': self.level1_lose
+            'level1_lose': self.level1_lose,
+            'level2': self.level2,
+            'level2_win': self.level2_win,
+            'level2_lose': self.level2_lose
         }
 
         self.gameStateManager.register_states(self.states)
