@@ -122,7 +122,7 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "rank_pos": (730, 510),
         "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf",
         "rank_font_size": 28,
-        "rank_image_pos": (650, 310),
+        "rank_image_pos": (650, 300),
         "rank_image_size": (190, 190),
         "highscore_pos": (579, 148),
         "plays_pos": (635, 186),
@@ -137,13 +137,13 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "rank_pos": (730, 510),
         "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf",
         "rank_font_size": 28,
-        "rank_image_pos": (650, 310),
+        "rank_image_pos": (650, 300),
         "rank_image_size": (190, 190),
         "highscore_pos": (579, 148),
         "plays_pos": (635, 186),
         "boss_name_pos": (448, 148),
         "boss_image_pos": (560, 400),
-        "locked_message_pos": (560, 268),
+        "locked_message_pos": (500, 330),
     },
     {
         "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
@@ -152,13 +152,13 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "rank_pos": (730, 510),
         "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf",
         "rank_font_size": 28,
-        "rank_image_pos": (650, 310),
+        "rank_image_pos": (650, 300),
         "rank_image_size": (190, 190),
         "highscore_pos": (579, 148),
         "plays_pos": (635, 186),
         "boss_name_pos": (448, 148),
         "boss_image_pos": (560, 400),
-        "locked_message_pos": (560, 268),
+        "locked_message_pos": (560, 330),
     },
     {
         "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
@@ -167,13 +167,13 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "rank_pos": (730, 510),
         "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf",
         "rank_font_size": 28,
-        "rank_image_pos": (650, 310),
+        "rank_image_pos": (650, 300),
         "rank_image_size": (190, 190),
         "highscore_pos": (579, 148),
         "plays_pos": (635, 186),
         "boss_name_pos": (448, 148),
         "boss_image_pos": (560, 400),
-        "locked_message_pos": (560, 268),
+        "locked_message_pos": (560, 330),
     },
     {
         "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
@@ -182,15 +182,23 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "rank_pos": (730, 510),
         "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf",
         "rank_font_size": 28,
-        "rank_image_pos": (650, 310),
+        "rank_image_pos": (650, 300),
         "rank_image_size": (190, 190),
         "highscore_pos": (579, 148),
         "plays_pos": (635, 186),
         "boss_name_pos": (448, 148),
         "boss_image_pos": (560, 400),
-        "locked_message_pos": (560, 268),
+        "locked_message_pos": (560, 330),
     },
 ]
+
+LEVEL_BACKGROUND_IMAGE_PATHS = {
+    "level1": "assets/backgrounds/level_one_behind.png",
+    "level2": "assets/backgrounds/level_two_behind.png",
+    "level3": "assets/backgrounds/level_three_behind.png",
+    "level4": "assets/backgrounds/level_four_behind.png",
+    "level5": "assets/backgrounds/level_five_behind.png",
+}
 
 class StatisticsManager:
     def __init__(self, filepath=STATISTICS_CSV_PATH, level_keys=None):
@@ -498,7 +506,7 @@ class LevelSelect:
                 message_surf = stat_font.render("COMING SOON", True, (112, 100, 100))
                 self.display.blit(message_surf, config["locked_message_pos"])
             elif not is_level_unlocked(level_key, self.stats_manager):
-                message_surf = stat_font.render("LOCKED", True, (112, 100, 100))
+                message_surf = stat_font.render("MEI (LVL 1) REQUIRED", True, (112, 100, 100))
                 self.display.blit(message_surf, config["locked_message_pos"])
             else:
                 stats = self.stats_manager.get(level_key)
@@ -666,6 +674,7 @@ class Level:
         self.music_path = self.level_data["music"]
         self.bullet_mask_cache = {}
         self.bullet_sprite_cache = {}
+        self.background_img_cache = {}
         self.preload_bullet_sprites()
 
         self.action_library = {
@@ -698,6 +707,13 @@ class Level:
             mask = py.mask.from_surface(image)
             self.bullet_sprite_cache[sprite_path] = (image, mask)
         return self.bullet_sprite_cache[sprite_path]
+
+    def _get_level_background(self):
+        if self.level_key not in self.background_img_cache:
+            path = LEVEL_BACKGROUND_IMAGE_PATHS.get(self.level_key)
+            image = py.image.load(path).convert_alpha()
+            self.background_img_cache[self.level_key] = image
+        return self.background_img_cache[self.level_key]
 
     def preload_bullet_sprites(self):
         for event in self.level_data.get("timeline", []):
@@ -1150,6 +1166,7 @@ class Level:
             self.player_bullet_reload -= 1 * dt
 
         screen.fill(BACKGROUND_COLOR)
+        screen.blit(self._get_level_background(), (0, 0))
 
         for spinner in self.spinning_blades[:]:
             spinner["rotation"] += spinner["spin_speed"] * spinner["spin_direction"] * dt
@@ -1356,8 +1373,8 @@ class LevelResultScreen:
 
         self.title_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 50)
         self.option_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
-        self.stat_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 28)
-        self.stat_font_small = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 16)
+        self.stat_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 45)
+        self.stat_font_small = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 26)
         self.stat_small_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 18)
         self.equation_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 26)
         self.rank_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 35)
@@ -1394,8 +1411,6 @@ class LevelResultScreen:
 
         return score, graze, graze_bonus, damage_taken, damage_penalty, final_score, rank
 
-        return score, graze, graze_bonus, damage_taken, damage_penalty, final_score, rank
-
     def handle_input(self, events):
         for event in events:
             if event.type == py.KEYDOWN:
@@ -1425,9 +1440,9 @@ class LevelResultScreen:
         if self.show_rating:
             score, graze, graze_bonus, damage_taken, damage_penalty, final_score, rank = self._compute_rating()
 
-            equation_x = 70
+            equation_x = 115
             line_height = 32
-            line1_y = 260
+            line1_y = 160
 
             line1_text = "   " + f"{score:07d}"
             line2_text = "  +" + f"{graze_bonus:>7d}"
@@ -1442,17 +1457,17 @@ class LevelResultScreen:
             self.display.blit(line3_surf, (equation_x, line1_y + line_height * 2))
 
             label_x = equation_x + line1_surf.get_width() + 15
-            score_label_surf = self.stat_small_font.render("(score)", True, (255, 255, 233))
-            graze_label_surf = self.stat_small_font.render("(graze)", True, (255, 255, 233))
-            damage_label_surf = self.stat_small_font.render("(damage)", True, (255, 255, 233))
+            score_label_surf = self.stat_small_font.render("(score)", True, (213, 203, 183))
+            graze_label_surf = self.stat_small_font.render("(graze)", True, (213, 203, 183))
+            damage_label_surf = self.stat_small_font.render("(damage)", True, (213, 203, 183))
             self.display.blit(score_label_surf, (label_x, line1_y + 6))
             self.display.blit(graze_label_surf, (label_x, line1_y + line_height + 6))
             self.display.blit(damage_label_surf, (label_x, line1_y + line_height * 2 + 6))
 
             total_surf = self.stat_font.render(f"SCORE: {final_score}", True, (255, 255, 233))
-            deaths_surf = self.stat_font_small.render(f"DEATHS: {damage_taken}", True, (255, 255, 233))
-            self.display.blit(total_surf, (equation_x, line1_y + line_height * 3 + 20))
-            self.display.blit(deaths_surf, (equation_x, line1_y + line_height * 3 + 20 + total_surf.get_height() + 4))
+            deaths_surf = self.stat_font_small.render(f"{damage_taken} DEATHS", True, (213, 203, 183))
+            self.display.blit(total_surf, (equation_x - 53, line1_y + line_height * 3 + 20))
+            self.display.blit(deaths_surf, (equation_x + 138, line1_y + line_height * 3 + total_surf.get_height() + 24))
 
             rank_img = RANK_IMAGES[rank]
             RANK_IMAGE_SCALE = 1.3
@@ -1505,9 +1520,9 @@ class Game:
         self.settings = Settings(self.screen, self.gameStateManager)
 
         rank_thresholds_1 = [
-            ("MEI", 60000),
-            ("GUTSU", 35000),
-            ("KUU", 15000),
+            ("MEI", 100000),
+            ("GUTSU", 80000),
+            ("KUU", 50000),
             ("SHII", 0)
         ]
 
