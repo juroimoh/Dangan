@@ -62,7 +62,7 @@ KEY_DISPLAY_POSITIONS = {
     "space": (575, 507),
 }
 
-PLAYER_HITBOX_INSET = 1
+PLAYER_HITBOX_INSET = 2
 
 def _build_player_hitbox_mask(image, inset):
     width, height = image.get_size()
