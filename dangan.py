@@ -107,6 +107,23 @@ STATISTICS_CSV_PATH = "statistics.csv"
 STATISTICS_FIELDNAMES = ["level", "rank", "highscore", "plays"]
 RANK_ORDER = ["HAKU", "MEI", "GUTSU", "KUU", "SHII", "NONE"]
 
+OPTIONS_FILE = "options.csv"
+def load_options():
+    defaults = {"music_volume": 50, "sfx_volume": 50}
+    if not os.path.exists(OPTIONS_FILE):
+        return defaults
+    with open(OPTIONS_FILE, newline="") as f:
+        for key, value in csv.reader(f):
+            if key in defaults:
+                defaults[key] = int(value)
+    return defaults
+
+def save_options(music_volume, sfx_volume):
+    with open(OPTIONS_FILE, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["music_volume", music_volume])
+        writer.writerow(["sfx_volume", sfx_volume])
+
 LEVEL_UNLOCK_REQUIREMENTS = {
     "level1": None,
     "level2": ("level1", "MEI"),
@@ -598,8 +615,7 @@ class Settings:
         self.gameStateManager = gameStateManager
         self.options = ["MUSIC", "EFFECTS", "BACK"]
         self.selected_index = 0
-        self.music_volume = 50
-        self.sfx_volume = 50
+        opts = load_options(); self.music_volume = opts["music_volume"]; self.sfx_volume = opts["sfx_volume"]
         mixer.music.set_volume(self.music_volume / 100.0)
 
         self.options_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 40)
@@ -627,11 +643,14 @@ class Settings:
                             self.sfx_volume = 0
                     elif self.selected_index == 2:
                         self.gameStateManager.set_state('main_menu')
+                        save_options(self.music_volume, self.sfx_volume)
                 elif event.key == py.K_RETURN:
                     if self.selected_index == 2:
                         self.gameStateManager.set_state('main_menu')
+                        save_options(self.music_volume, self.sfx_volume)
                 elif event.key == py.K_ESCAPE:
                     self.gameStateManager.set_state('main_menu')
+                    save_options(self.music_volume, self.sfx_volume)
                 elif event.key in (py.K_LEFT, py.K_a):
                     if self.selected_index == 0:
                         self.music_volume = max(0, self.music_volume - 5)
