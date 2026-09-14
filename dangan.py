@@ -1533,10 +1533,10 @@ class Game:
         self.manual = Manual(self.screen, self.gameStateManager)
         self.level_select = LevelSelect(self.screen, self.gameStateManager, self.level1, self.stats_manager, self.level_keys, self.playable_level_keys)
 
-        self.level1_win = LevelResultScreen(self.screen, self.gameStateManager, self.level1, "LEVEL CLEAR", show_rating=True, background_img=win_level_bg_img, level_key="level1", stats_manager=self.stats_manager)
+        self.level1_win = LevelResultScreen(self.screen, self.gameStateManager, self.level1, "LEVEL CLEAR", "assets/audio/level_win.ogg", show_rating=True, background_img=win_level_bg_img, level_key="level1", stats_manager=self.stats_manager)
         self.level1_lose = LevelResultScreen(self.screen, self.gameStateManager, self.level1, "GAME OVER", "assets/audio/level_lose.ogg", background_img=lose_level_bg_img, level_key="level1", stats_manager=self.stats_manager)
 
-        self.level2_win = LevelResultScreen(self.screen, self.gameStateManager, self.level2, "LEVEL CLEAR", show_rating=True, background_img=win_level_bg_img, level_key="level2", stats_manager=self.stats_manager)
+        self.level2_win = LevelResultScreen(self.screen, self.gameStateManager, self.level2, "LEVEL CLEAR", "assets/audio/level_win.ogg", show_rating=True, background_img=win_level_bg_img, level_key="level2", stats_manager=self.stats_manager)
         self.level2_lose = LevelResultScreen(self.screen, self.gameStateManager, self.level2, "GAME OVER", "assets/audio/level_lose.ogg", background_img=lose_level_bg_img, level_key="level2", stats_manager=self.stats_manager)
 
         self.states = {
