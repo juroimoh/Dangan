@@ -1505,7 +1505,6 @@ class Game:
         self.settings = Settings(self.screen, self.gameStateManager)
 
         rank_thresholds_1 = [
-            ("HAKU", 70000),
             ("MEI", 60000),
             ("GUTSU", 35000),
             ("KUU", 15000),
@@ -1513,7 +1512,6 @@ class Game:
         ]
 
         rank_thresholds_2 = [
-            ("HAKU", 70000),
             ("MEI", 60000),
             ("GUTSU", 35000),
             ("KUU", 15000),
