@@ -128,6 +128,7 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "plays_pos": (635, 186),
         "boss_name_pos": (448, 148),
         "boss_image_pos": (560, 400),
+        "locked_message_pos": (560, 268),
     },
     {
         "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
@@ -142,6 +143,7 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "plays_pos": (635, 186),
         "boss_name_pos": (448, 148),
         "boss_image_pos": (560, 400),
+        "locked_message_pos": (560, 268),
     },
     {
         "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
@@ -156,6 +158,7 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "plays_pos": (635, 186),
         "boss_name_pos": (448, 148),
         "boss_image_pos": (560, 400),
+        "locked_message_pos": (560, 268),
     },
     {
         "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
@@ -170,6 +173,7 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "plays_pos": (635, 186),
         "boss_name_pos": (448, 148),
         "boss_image_pos": (560, 400),
+        "locked_message_pos": (560, 268),
     },
     {
         "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
@@ -184,6 +188,7 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "plays_pos": (635, 186),
         "boss_name_pos": (448, 148),
         "boss_image_pos": (560, 400),
+        "locked_message_pos": (560, 268),
     },
 ]
 
@@ -1376,11 +1381,18 @@ class LevelResultScreen:
         damage_penalty = damage_taken * DAMAGE_PENALTY_PER_HIT
         final_score = score + graze_bonus - damage_penalty
 
-        rank = "SHII"
-        for rank_name, threshold in self.level_ref.rank_thresholds:
-            if final_score >= threshold:
-                rank = rank_name
-                break
+        if damage_taken == 0:
+            rank = "HAKU"
+        else:
+            rank = "SHII"
+            for rank_name, threshold in self.level_ref.rank_thresholds:
+                if rank_name == "HAKU":
+                    continue
+                if final_score >= threshold:
+                    rank = rank_name
+                    break
+
+        return score, graze, graze_bonus, damage_taken, damage_penalty, final_score, rank
 
         return score, graze, graze_bonus, damage_taken, damage_penalty, final_score, rank
 

@@ -31,10 +31,10 @@
       "type": "spawn_spread",
       "sprite": "assets/entities/bubble_bullet.png",
       "count": 1,
-      "spread_angle": 60,
+      "spread_angle": 50,
       "base_angle": 90,
       "speed": 200,
-      "repetitions": 6,
+      "repetitions": 20,
       "delay": 0.25
     },
     {
@@ -69,7 +69,7 @@
       "movement_type": "curved",
       "curve_rate": -35.0,
       "speed": 180,
-      "repetitions": 3,
+      "repetitions": 8,
       "delay": 0.35
     },
     {
@@ -118,7 +118,7 @@
       "time": 16.5,
       "type": "spawn_spread",
       "sprite": "assets/entities/bubble_bullet.png",
-      "count": 11,
+      "count": 30,
       "spread_angle": 120,
       "base_angle": 90,
       "movement_type": "accelerating",
@@ -160,7 +160,7 @@
       "time": 27.5,
       "type": "spawn_ring",
       "sprite": "assets/entities/spike_bullet.png",
-      "count": 6,
+      "count": 61,
       "base_angle": 0,
       "speed": 170,
       "repetitions": 12,
