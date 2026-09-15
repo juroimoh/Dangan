@@ -19,18 +19,24 @@ There is no mouse functionality.
 
 ## Installation
 
-This project uses Pygame 2.6.1, and coded using Python version 3.9.
+Make sure your device has Python installed, and your screen has a resolution of at least 900x600.  
+This project uses Pygame 2.6.1, and was coded using Python version 3.9. Download Python [here](https://www.python.org/downloads/).  
 
-Install required dependencies by running the following command.
+`1` Click on the green `˂˃ Code` button, then 'Download ZIP'.  
+`2` Right click the folder in a File application, and click 'Extract All'.  
+Make sure the files are organized as seen in this Repository and below under [Project Files](#project-files).  
 
+`3 Mac/Linux` Open the Terminal on your device and type 'cd ' before dragging the new folder into the Terminal.  
+`3 Windows` Open the folder and click on the address bar. Then type 'cmd' and hit Enter.  
+
+`4` Install the required dependencies by running the following command.  
+If pip gives an error on Mac or Linux, try using 'pip3 install -r requirements.txt'
 ```
 pip install -r requirements.txt
 ```
 
-Install all required libraries, and make sure the files are organized as seen in this Repository and below under [Project Files](#project-files).
-
-To play, run the following command (where? idk)
-
+`5` Run the game with the following command.  
+If python gives an error on Mac or Linux, try 'python3 dangan.py'
 ```
 python dangan.py
 ```
