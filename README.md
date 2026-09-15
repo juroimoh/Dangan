@@ -14,7 +14,7 @@ Dodge their attacks, fire shots back, and achieve the highest ranks on all level
 ## Controls
 
 - `↑ ← ↓ →` | Movement and Navigate (alternatively use `WASD`)  
-- `SPACE` | Shoot and Select  
+- `SPACE` | Shoot and Select (alternatively use `Enter` to Select)  
 - `ESC` | Exit Level/Screen  
 
 There is no mouse functionality.
