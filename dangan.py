@@ -864,7 +864,7 @@ class Level:
         count = event.get("count", 5)
         spread_angle = event.get("spread_angle", 60.0)
         base_angle = event.get("base_angle", 90.0)
-        from_enemy = ("x" not in event and "y" not in event)
+        from_enemy = ("x" not in event and "y" not in event) # Checks if the bullet is shot from the enemy position
 
         if count <= 1:
             angles = [base_angle]
@@ -880,7 +880,7 @@ class Level:
             bullet_data["angle"] = a
             self._fire_single_bullet(bullet_data)
 
-        if from_enemy:
+        if from_enemy: # If it is, play the enemy_shoot sound
             self.queue_sfx(event.get("sound", "enemy_shoot"), count=len(angles))
 
     def action_spawn_spread(self, event):
