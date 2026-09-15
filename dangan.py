@@ -133,7 +133,7 @@ SFX_VOLUME_MULTIPLIERS = {
     "enemy_shoot": 1.8,
     "hit": 2,
     "shoot": 1.3,
-    "graze": 2,
+    "graze": 0.01,
     "damage": 5,
 }
 
@@ -1487,7 +1487,8 @@ class Level:
                     graze_y = int(b["y"] - b["height"] / 2 - (self.player.y + self.player_width / 2 - self.graze_radius))
                     if self.graze_mask.overlap(b_mask, (graze_x, graze_y)):
                         self.graze_score += 1
-                        play_sfx("graze")
+                        if self.graze_score % 20 == 0:
+                            play_sfx("graze")
 
             half_w = b["width"] / 2
             half_h = b["height"] / 2
@@ -1727,9 +1728,9 @@ class Game:
         self.settings = Settings(self.screen, self.gameStateManager)
 
         rank_thresholds_1 = [
-            ("MEI", 100000),
-            ("GUTSU", 80000),
-            ("KUU", 50000),
+            ("MEI", 140000),
+            ("GUTSU", 100000),
+            ("KUU", 60000),
             ("SHII", 0)
         ]
 
