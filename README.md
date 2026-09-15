@@ -1,4 +1,4 @@
-> this page is a work in progress
+> this page is a work in progress  
 > For Qianxun Chen → If you want to unlock the second level by cheating, edit statistics.csv and edit the first rank to HAKU.
 
 # Dangan (弾丸)
