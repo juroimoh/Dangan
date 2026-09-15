@@ -113,8 +113,53 @@ STATISTICS_CSV_PATH = "statistics.csv"
 STATISTICS_FIELDNAMES = ["level", "rank", "highscore", "plays"]
 RANK_ORDER = ["HAKU", "MEI", "GUTSU", "KUU", "SHII", "NONE"]
 
+SFX_VOLUME = 0.5
+
+SFX_PATHS = {
+    "select": "assets/audio/effects/select.ogg",
+    "click": "assets/audio/effects/click.ogg",
+    "shoot": "assets/audio/effects/shoot.ogg",
+    "hit": "assets/audio/effects/hit.ogg",
+    "damage": "assets/audio/effects/damage.ogg",
+    "graze": "assets/audio/effects/graze.ogg",
+    "blade_on": "assets/audio/effects/blade_on.ogg",
+    "level_start": "assets/audio/effects/level_start.ogg",
+    "pause": "assets/audio/effects/pause.ogg",
+    "locked": "assets/audio/effects/locked.ogg",
+    "enemy_shoot": "assets/audio/effects/enemy_shoot.ogg",
+}
+
+SFX_VOLUME_MULTIPLIERS = {
+    "enemy_shoot": 1.8,
+    "hit": 2,
+    "shoot": 1.3,
+    "graze": 2,
+    "damage": 5,
+}
+
+_sfx_cache = {}
+
+def play_sfx(name):
+    if name not in _sfx_cache:
+        path = SFX_PATHS.get(name)
+        sound = None
+        if path and os.path.exists(path):
+            try:
+                sound = mixer.Sound(path)
+            except py.error as e:
+                print(f"Could not load sfx '{name}': {e}")
+        _sfx_cache[name] = sound
+
+    sound = _sfx_cache[name]
+    if sound is not None:
+        multiplier = SFX_VOLUME_MULTIPLIERS.get(name, 1.0)
+        sound.set_volume(min(1.0, SFX_VOLUME * multiplier))
+        sound.play()
+
 OPTIONS_FILE = "options.csv"
+
 def load_options():
+    global SFX_VOLUME
     defaults = {"music_volume": 50, "sfx_volume": 50}
     if not os.path.exists(OPTIONS_FILE):
         return defaults
@@ -404,6 +449,7 @@ class Splash:
             if event.type == py.KEYDOWN:
                 if event.key in (py.K_SPACE, py.K_ESCAPE, py.K_RETURN):
                     self.gameStateManager.set_state('main_menu')
+                    play_sfx("click")
 
     def run(self, dt):
         self.timer += dt
@@ -426,10 +472,13 @@ class MainMenu:
         for event in events:
             if event.type == py.KEYDOWN:
                 if event.key in (py.K_UP, py.K_w):
+                    play_sfx("select")
                     self.selected_index = (self.selected_index - 1) % len(self.options)
                 elif event.key in (py.K_DOWN, py.K_s):
+                    play_sfx("select")
                     self.selected_index = (self.selected_index + 1) % len(self.options)
                 elif event.key in (py.K_SPACE, py.K_RETURN):
+                    play_sfx("click")
                     if self.selected_index == 0:
                         self.gameStateManager.set_state('level_select')
                     elif self.selected_index == 1:
@@ -469,6 +518,7 @@ class Manual:
             if event.type == py.KEYDOWN:
                 if event.key in (py.K_SPACE, py.K_RETURN, py.K_ESCAPE):
                     self.gameStateManager.set_state('main_menu')
+                    play_sfx("click")
 
     def run(self, dt):
         self.display.blit(manual_img, (0, 0))
@@ -529,18 +579,23 @@ class LevelSelect:
         for event in events:
             if event.type == py.KEYDOWN:
                 if event.key in (py.K_UP, py.K_w):
+                    play_sfx("select")
                     self.selected_index = (self.selected_index - 1) % len(self.options)
                 elif event.key in (py.K_DOWN, py.K_s):
+                    play_sfx("select")
                     self.selected_index = (self.selected_index + 1) % len(self.options)
                 elif event.key == py.K_ESCAPE:
                     self.gameStateManager.set_state('main_menu')
+                    play_sfx("click")
                 elif event.key in (py.K_SPACE, py.K_RETURN):
                     if self.selected_index < len(self.level_keys):
                         level_key = self.level_keys[self.selected_index]
                         if self._is_level_clickable(level_key):
                             self.gameStateManager.set_state(level_key)
+                            play_sfx("click")
                     elif self.selected_index == 5:
                         self.gameStateManager.set_state('main_menu')
+                        play_sfx("click")
 
     def run(self, dt):
         self.display.fill(BACKGROUND_COLOR)
@@ -617,11 +672,12 @@ class LevelSelect:
 
 class Settings:
     def __init__(self, display, gameStateManager):
+        global SFX_VOLUME
         self.display = display
         self.gameStateManager = gameStateManager
         self.options = ["MUSIC", "EFFECTS", "BACK"]
         self.selected_index = 0
-        opts = load_options(); self.music_volume = opts["music_volume"]; self.sfx_volume = opts["sfx_volume"]
+        opts = load_options(); self.music_volume = opts["music_volume"]; self.sfx_volume = opts["sfx_volume"]; SFX_VOLUME = opts["sfx_volume"]
         mixer.music.set_volume(self.music_volume / 100.0)
 
         self.options_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 40)
@@ -631,13 +687,17 @@ class Settings:
         self.selected_index = 0
 
     def handle_input(self, events):
+        global SFX_VOLUME
         for event in events:
             if event.type == py.KEYDOWN:
                 if event.key in (py.K_UP, py.K_w):
+                    play_sfx("select")
                     self.selected_index = (self.selected_index - 1) % len(self.options)
                 elif event.key in (py.K_DOWN, py.K_s):
+                    play_sfx("select")
                     self.selected_index = (self.selected_index + 1) % len(self.options)
                 elif event.key == py.K_SPACE:
+                    play_sfx("click")
                     if self.selected_index == 0:
                         self.music_volume += 5
                         if self.music_volume > 100:
@@ -645,8 +705,10 @@ class Settings:
                         mixer.music.set_volume(self.music_volume / 100.0)
                     elif self.selected_index == 1:
                         self.sfx_volume += 5
+                        SFX_VOLUME = self.sfx_volume / 100.0
                         if self.sfx_volume > 100:
                             self.sfx_volume = 0
+                            SFX_VOLUME = self.sfx_volume / 100.0
                     elif self.selected_index == 2:
                         self.gameStateManager.set_state('main_menu')
                         save_options(self.music_volume, self.sfx_volume)
@@ -657,18 +719,23 @@ class Settings:
                 elif event.key == py.K_ESCAPE:
                     self.gameStateManager.set_state('main_menu')
                     save_options(self.music_volume, self.sfx_volume)
+                    play_sfx("click")
                 elif event.key in (py.K_LEFT, py.K_a):
+                    play_sfx("click")
                     if self.selected_index == 0:
                         self.music_volume = max(0, self.music_volume - 5)
                         mixer.music.set_volume(self.music_volume / 100.0)
                     elif self.selected_index == 1:
                         self.sfx_volume = max(0, self.sfx_volume - 5)
+                        SFX_VOLUME = self.sfx_volume / 100.0
                 elif event.key in (py.K_RIGHT, py.K_d):
+                    play_sfx("click")
                     if self.selected_index == 0:
                         self.music_volume = min(100, self.music_volume + 5)
                         mixer.music.set_volume(self.music_volume / 100.0)
                     elif self.selected_index == 1:
                         self.sfx_volume = min(100, self.sfx_volume + 5)
+                        SFX_VOLUME = self.sfx_volume / 100.0
 
     def run(self, dt):
         self.display.fill(BACKGROUND_COLOR)
@@ -746,6 +813,28 @@ class Level:
         self.title_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 30)
         self.subtitle_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
 
+    def queue_sfx(self, name, count=1, stagger=0.02):
+        for i in range(count):
+            self.pending_sfx.append({"name": name, "timer": i * stagger})
+
+    def action_spawn_bullet(self, event):
+        repetitions = event.get("repetitions", 1)
+        delay = event.get("delay", 0.1)
+
+        fire_event = dict(event)
+        fire_event["_play_sound"] = ("x" not in event and "y" not in event)
+
+        if repetitions > 1:
+            self.active_spawners.append({
+                "fire_func": self._fire_single_bullet,
+                "event": fire_event,
+                "remaining": repetitions,
+                "timer": 0.0,
+                "interval": delay
+            })
+        else:
+            self._fire_single_bullet(fire_event)
+
     def get_bullet_mask(self, radius):
         if radius not in self.bullet_mask_cache:
             surf = py.Surface((radius * 2, radius * 2), py.SRCALPHA)
@@ -791,6 +880,7 @@ class Level:
         self.hit_flashes.append({"x": float(hit_x), "y": float(hit_y), "elapsed": 0.0})
 
         self.hit_timer = HIT_TIMEOUT_DURATION
+        play_sfx("damage")
         self.survival_timer = 0.0
         self.health = max(0, self.health - 1)
         self.damage_taken += 1
@@ -845,6 +935,9 @@ class Level:
 
         self.enemy_bullets.append(bullet)
 
+        if b_params.get("_play_sound", False):
+            play_sfx(b_params.get("sound", "enemy_shoot"))
+
     def action_spawn_bullet(self, event):
         repetitions = event.get("repetitions", 1)
         delay = event.get("delay", 0.1)
@@ -866,6 +959,7 @@ class Level:
         count = event.get("count", 5)
         spread_angle = event.get("spread_angle", 60.0)
         base_angle = event.get("base_angle", 90.0)
+        from_enemy = ("x" not in event and "y" not in event)
 
         if count <= 1:
             angles = [base_angle]
@@ -880,6 +974,9 @@ class Level:
             bullet_data["y"] = y
             bullet_data["angle"] = a
             self._fire_single_bullet(bullet_data)
+
+        if from_enemy:
+            self.queue_sfx(event.get("sound", "enemy_shoot"), count=len(angles))
 
     def action_spawn_spread(self, event):
         repetitions = event.get("repetitions", 1)
@@ -901,6 +998,7 @@ class Level:
         y = event.get("y", self.enemy_y + self.enemy_img.get_height() / 2)
         count = event.get("count", 12)
         base_angle = event.get("base_angle", 0.0)
+        from_enemy = ("x" not in event and "y" not in event)
 
         step = 360.0 / count
         for i in range(count):
@@ -910,6 +1008,9 @@ class Level:
             bullet_data["y"] = y
             bullet_data["angle"] = a
             self._fire_single_bullet(bullet_data)
+
+        if from_enemy:
+            self.queue_sfx(event.get("sound", "enemy_shoot"), count=count)
 
     def action_spawn_ring(self, event):
         repetitions = event.get("repetitions", 1)
@@ -1053,11 +1154,14 @@ class Level:
 
         self.hit_timer = 0.0
 
+        self.pending_sfx = []
+
     def handle_input(self, events):
         for event in events:
             if event.type == py.KEYDOWN:
                 if event.key == py.K_ESCAPE:
                     self.gameStateManager.set_state('level_select')
+                    play_sfx("click")
                 elif DEBUG_END_SCREEN_SKIP and event.key == py.K_F1:
                     self.score = DEBUG_TEST_SCORE
                     self.graze_score = DEBUG_TEST_GRAZE
@@ -1140,6 +1244,12 @@ class Level:
             else:
                 break
 
+        for entry in self.pending_sfx[:]:
+            entry["timer"] -= dt
+            if entry["timer"] <= 0:
+                play_sfx(entry["name"])
+                self.pending_sfx.remove(entry)
+
         if self.enemy_movement_mode == "linear":
             self.enemy_move_elapsed += dt
             t = min(1.0, self.enemy_move_elapsed / self.enemy_move_duration)
@@ -1216,6 +1326,7 @@ class Level:
                 self.player.y = 550 - self.player_width
 
         if keys[py.K_SPACE] and self.player_bullet_reload <= 0 and self.hit_timer <= 0:
+            play_sfx("shoot")
             self.player_bullet_reload = 0.15
             player_bullet_x = self.player.x + self.player_width / 2 - self.player_bullet_width / 2
             player_bullet_y = self.player.y - 5
@@ -1286,6 +1397,7 @@ class Level:
             b[1] -= self.player_bullet_speed * dt
             if self.enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
                 self.score += 100
+                play_sfx("hit")
                 self.player_bullets.remove(b)
                 continue
             if b[1] < 0:
@@ -1295,6 +1407,7 @@ class Level:
             b[0] -= self.player_bullet_speed / 10 * dt
             if self.enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
                 self.score += 100
+                play_sfx("hit")
                 self.player_bulletsl.remove(b)
                 continue
             if b[1] < 0:
@@ -1304,6 +1417,7 @@ class Level:
             b[0] += self.player_bullet_speed / 10 * dt
             if self.enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
                 self.score += 100
+                play_sfx("hit")
                 self.player_bulletsr.remove(b)
                 continue
             if b[1] < 0:
@@ -1373,6 +1487,7 @@ class Level:
                     graze_y = int(b["y"] - b["height"] / 2 - (self.player.y + self.player_width / 2 - self.graze_radius))
                     if self.graze_mask.overlap(b_mask, (graze_x, graze_y)):
                         self.graze_score += 1
+                        play_sfx("graze")
 
             half_w = b["width"] / 2
             half_h = b["height"] / 2
@@ -1503,20 +1618,25 @@ class LevelResultScreen:
             if event.type == py.KEYDOWN:
                 if event.key == py.K_ESCAPE:
                     self.gameStateManager.set_state('level_select')
+                    play_sfx("click")
                 elif event.key in (py.K_UP, py.K_w, py.K_DOWN, py.K_s):
                     self.selected_index = (self.selected_index + 1) % len(self.options)
+                    play_sfx("select")
                 elif event.key in (py.K_SPACE, py.K_RETURN):
                     if not self.confirm_ready:
                         continue
                     if self.selected_index == 0:
                         self.gameStateManager.set_state(self.level_key)
+                        play_sfx("click")
                     else:
                         self.gameStateManager.set_state('level_select')
+                        play_sfx("click")
 
     def run(self, dt):
         if not self.confirm_ready:
             keys = py.key.get_pressed()
             if not (keys[py.K_SPACE] or keys[py.K_RETURN]):
+                play_sfx("click")
                 self.confirm_ready = True
 
         if self.background_img is not None:
