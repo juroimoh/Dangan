@@ -951,6 +951,8 @@ class Level:
 
     def action_spawn_spinning_blades(self, event):
         switch_interval = event.get("switch_interval", 1.5)
+        turn_on_duration = event.get("turn_on_duration", 0.5)
+        turn_off_duration = event.get("turn_off_duration", 0.5)
         self.spinning_blades.append({
             "rotation": event.get("start_angle", 0.0),
             "spin_speed": event.get("spin_speed", 60.0),
@@ -958,11 +960,11 @@ class Level:
             "switch_interval": switch_interval,
             "switch_timer": switch_interval,
             "on": event.get("start_active", True),
-            "transition_elapsed": 0.0,
+            "transition_elapsed": max(turn_on_duration, turn_off_duration),
             "fade_in_duration": event.get("fade_in_duration", 1.0),
             "spawn_elapsed": 0.0,
-            "turn_on_duration": event.get("turn_on_duration", 0.5),
-            "turn_off_duration": event.get("turn_off_duration", 0.5),
+            "turn_on_duration": turn_on_duration,
+            "turn_off_duration": turn_off_duration,
             "center_x": event.get("x", None),
             "center_y": event.get("y", None),
             "duration": event.get("duration", None),
@@ -1262,7 +1264,7 @@ class Level:
             rotated_red.set_alpha(int(red_t * 255 * visibility))
             screen.blit(rotated_red, red_rect)
 
-            if red_t >= 1.0 and self.hit_timer <= 0:
+            if red_t >= 0.5 and self.hit_timer <= 0:
                 blade_mask = py.mask.from_surface(rotated_red)
                 if self.player_mask.overlap(blade_mask, (red_rect.x - self.player.x, red_rect.y - self.player.y)):
                     self.take_damage()

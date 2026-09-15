@@ -10,6 +10,20 @@
       "y": 80,
       "duration": 1.5
     },
+
+
+
+
+    {"time": 2, "type": "spawn_spinning_blades", "start_angle": 90, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 7},
+    {"time": 2, "type": "spawn_spinning_blades", "start_angle": 270, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 7},
+    {"time": 3.5, "type": "spawn_spinning_blades", "start_angle": 90, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 5.5},
+    {"time": 3.5, "type": "spawn_spinning_blades", "start_angle": 270, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 5.5},
+    {"time": 5, "type": "spawn_spinning_blades", "start_angle": 90, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 4},
+    {"time": 5, "type": "spawn_spinning_blades", "start_angle": 270, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 4},
+
+
+
+
     {
       "time": 1.0,
       "type": "spawn_bullet",
