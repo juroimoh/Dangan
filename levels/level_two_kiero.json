@@ -4,10 +4,10 @@
   "enemy_y": 10,
   "timeline": [
     {"time": 0, "type": "move_enemy", "x": 281, "y": 90, "duration": 1.5},
-    {"time": 0.5, "type": "spawn_bullet", "angle": 90, "speed": 200, "sprite": "assets/entities/normal_bullet.png", "movement_type": "zigzag", "zigzag_freq": 4, "zigzag_amp": 300, "repetitions": 6, "delay": 0.2},
-    {"time": 0.5, "type": "spawn_bullet", "angle": 90, "speed": 200, "sprite": "assets/entities/normal_bullet.png", "movement_type": "zigzag", "zigzag_freq": 4, "zigzag_amp": -300, "repetitions": 6, "delay": 0.2},
-    {"time": 0.5, "type": "spawn_bullet", "angle": 45, "speed": 200, "sprite": "assets/entities/normal_bullet.png", "movement_type": "zigzag", "zigzag_freq": 8, "zigzag_amp": 180, "repetitions": 6, "delay": 0.2},
-    {"time": 0.5, "type": "spawn_bullet", "angle": 135, "speed": 200, "sprite": "assets/entities/normal_bullet.png", "movement_type": "zigzag", "zigzag_freq": 8, "zigzag_amp": -180, "repetitions": 6, "delay": 0.2},
+    {"time": 0.5, "type": "spawn_bullet", "angle": 90, "speed": 230, "sprite": "assets/entities/normal_bullet.png", "movement_type": "zigzag", "zigzag_freq": 4, "zigzag_amp": 250, "repetitions": 6, "delay": 0.23},
+    {"time": 0.5, "type": "spawn_bullet", "angle": 90, "speed": 230, "sprite": "assets/entities/normal_bullet.png", "movement_type": "zigzag", "zigzag_freq": 4, "zigzag_amp": -250, "repetitions": 6, "delay": 0.23},
+    {"time": 0.5, "type": "spawn_bullet", "angle": 45, "speed": 230, "sprite": "assets/entities/normal_bullet.png", "movement_type": "zigzag", "zigzag_freq": 8, "zigzag_amp": 180, "repetitions": 6, "delay": 0.23},
+    {"time": 0.5, "type": "spawn_bullet", "angle": 135, "speed": 230, "sprite": "assets/entities/normal_bullet.png", "movement_type": "zigzag", "zigzag_freq": 8, "zigzag_amp": -180, "repetitions": 6, "delay": 0.23},
     {"time": 3, "type": "spawn_bullet", "x": 60, "y": 50, "angle": 90, "speed": 200, "sprite": "assets/entities/spike_bullet.png", "repetitions": 6, "delay": 0.8},
     {"time": 3, "type": "spawn_bullet", "x": 540, "y": 50, "angle": 90, "speed": 200, "sprite": "assets/entities/spike_bullet.png", "repetitions": 6, "delay": 0.8},
     {"time": 3.2, "type": "spawn_ring", "count": 20, "speed": 150, "sprite": "assets/entities/bubble_bullet.png"},
@@ -32,27 +32,28 @@
     {"time": 9.8, "type": "spawn_bullet", "x": 337, "y": 50, "angle": 90, "speed": 200, "sprite": "assets/entities/bubble_bullet.png"},
     {"time": 9.8, "type": "spawn_bullet", "x": 374, "y": 50, "angle": 90, "speed": 200, "sprite": "assets/entities/bubble_bullet.png"},
 
-    {"time": 11, "type": "move_enemy", "x": 101, "y": 90, "duration": 3},
+    {"time": 11, "type": "move_enemy", "x": 101, "y": 90, "duration": 2},
     {"time": 12, "type": "spawn_bullet", "x": 50, "y": 50, "movement_type": "homing", "homing_rate": 30, "angle": 45, "speed": 170, "sprite": "assets/entities/normal_bullet.png", "repetitions": 8, "delay": 0.8},
     {"time": 12.4, "type": "spawn_bullet", "x": 550, "y": 50, "movement_type": "homing", "homing_rate": 30, "angle": 135, "speed": 170, "sprite": "assets/entities/normal_bullet.png", "repetitions": 8, "delay": 0.8},
+    {"time": 15, "type": "move_enemy", "x": 461, "y": 90, "duration": 2},
 
-    {"time": 12, "type": "move_enemy", "x": 281, "y": 180, "duration": 3.5},
-    {"time": 13, "type": "spawn_bullet", "x": 60, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 90, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 120, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 150, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 180, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 210, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 240, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 270, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 300, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 330, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 360, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 390, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 420, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 450, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 480, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 510, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
-    {"time": 13, "type": "spawn_bullet", "x": 540, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"}
+    {"time": 20, "type": "move_enemy", "x": 281, "y": 180, "duration": 3.5},
+    {"time": 21, "type": "spawn_bullet", "x": 60, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+    {"time": 21, "type": "spawn_bullet", "x": 90, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+    {"time": 21, "type": "spawn_bullet", "x": 120, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+    {"time": 21, "type": "spawn_bullet", "x": 150, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+
+    {"time": 21, "type": "spawn_bullet", "x": 210, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+    {"time": 21, "type": "spawn_bullet", "x": 240, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+    {"time": 21, "type": "spawn_bullet", "x": 270, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+
+    {"time": 21, "type": "spawn_bullet", "x": 330, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+    {"time": 21, "type": "spawn_bullet", "x": 360, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+    {"time": 21, "type": "spawn_bullet", "x": 390, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+
+    {"time": 21, "type": "spawn_bullet", "x": 450, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+    {"time": 21, "type": "spawn_bullet", "x": 480, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+    {"time": 21, "type": "spawn_bullet", "x": 510, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"},
+    {"time": 21, "type": "spawn_bullet", "x": 540, "y": 50, "angle": 90, "speed": 190, "sprite": "assets/entities/spike_bullet.png"}
   ]
 }
