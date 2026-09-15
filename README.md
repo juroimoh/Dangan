@@ -21,7 +21,7 @@ There is no mouse functionality.
 
 This project uses Pygame 2.6.1, and coded using Python version 3.9.
 
-Install required dependencies using the following command.
+Install required dependencies by running the following command.
 
 ```
 pip install -r requirements.txt
