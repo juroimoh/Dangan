@@ -206,7 +206,7 @@ def draw_boss(surface, key, x, y, scale): # Lets me visualize the characters whe
     scaled = py.transform.smoothscale(image, (width, height))
     surface.blit(scaled, (x, y))
 
-LEVEL_STAT_DISPLAY_CONFIG = [ # This is pretty redundant, only the locked message position is unique, which can be defined later anyways (i will update if I have time)
+LEVEL_STAT_DISPLAY_CONFIG = [ # This is pretty redundant, only the locked message position is unique, which can be defined later anyway (i will update if I have time)
     {"font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf", "font_size": 24, "color": (226, 190, 189), "rank_pos": (730, 510), "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", "rank_font_size": 28, "rank_image_pos": (650, 300), "rank_image_size": (190, 190), "highscore_pos": (579, 148), "plays_pos": (635, 186), "boss_name_pos": (448, 148), "locked_message_pos": (560, 330)},
     {"font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf", "font_size": 24, "color": (226, 190, 189), "rank_pos": (730, 510), "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", "rank_font_size": 28, "rank_image_pos": (650, 300), "rank_image_size": (190, 190), "highscore_pos": (579, 148), "plays_pos": (635, 186), "boss_name_pos": (448, 148), "locked_message_pos": (500, 330)},
     {"font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf", "font_size": 24, "color": (226, 190, 189), "rank_pos": (730, 510), "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", "rank_font_size": 28, "rank_image_pos": (650, 300), "rank_image_size": (190, 190), "highscore_pos": (579, 148), "plays_pos": (635, 186), "boss_name_pos": (448, 148), "locked_message_pos": (560, 330)},

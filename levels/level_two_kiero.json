@@ -1,8 +1,15 @@
 {
   "music": "assets/audio/level_two.ogg",
-  "enemy_x": 282,
+  "enemy_x": 281,
   "enemy_y": 10,
   "timeline": [
-    {"time": 0, "type": "move_enemy", "x": 282, "y": 90, "duration": 1.5}
+    {"time": 0, "type": "move_enemy", "x": 281, "y": 90, "duration": 1.5},
+    {"time": 0.5, "type": "spawn_bullet", "angle": 90, "speed": 200, "sprite": "assets/entities/normal_bullet.png", "movement_type": "zigzag", "zigzag_freq": 8, "zigzag_amp":  180,"repetitions": 6, "delay": 0.2},
+    { "time": 3.5, "type": "spawn_ring", "count": 20, "speed": 150, "sprite": "assets/entities/bubble_bullet.png"},
+    {"time": 3.5, "type": "move_enemy", "x": 61, "y": 90, "duration": 0.5},
+    { "time": 4, "type": "spawn_ring", "count": 20, "speed": 150, "sprite": "assets/entities/bubble_bullet.png"},
+    {"time": 4, "type": "move_enemy", "x": 501, "y": 90, "duration": 1},
+    { "time": 5, "type": "spawn_ring", "count": 20, "speed": 150, "sprite": "assets/entities/bubble_bullet.png"},
+    {"time": 5, "type": "move_enemy", "x": 281, "y": 90, "duration": 0.5}
   ]
 }
