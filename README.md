@@ -41,6 +41,18 @@ If python gives an error on Mac or Linux, try 'python3 dangan.py'
 python dangan.py
 ```
 
+## Manual
+
+This section will explain in detail all elements encountered in game, more in depth than the game manual below.  
+
+<img width="450" height="316" alt="Dangan Manual" src="https://github.com/user-attachments/assets/3fa58201-8b11-4655-b0b6-d1a91b74d590" />
+
+**Ranks**
+As seen above, you are awarded a rank after surviving a level.
+
+**Graze:**
+By narrowly avoiding bullets, you receive bonus points. This can heavily increase your final score.
+
 ## Project Files
 
 ```
