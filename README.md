@@ -85,5 +85,5 @@ Dangan/
 ---
 *All fonts used within `assets/fonts/` belong to their respective creators, and all songs present within the game files `assets/audio/` are property of Ntreev Soft and are not covered by the license.  
 
-_Dangan_
+_Dangan_  
 © 2026 juroimoh
