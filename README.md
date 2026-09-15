@@ -56,6 +56,6 @@ Dangan/
 `LICENSE`, `README.md`, and `documentation.pdf` are not required to run the game.
 
 ---
-*All fonts in `assets/fonts/` belong to their respective creators, and all songs present within the game files `assets/audio/` are property of Ntreev Soft and are not covered by the license.  
+*All fonts used within `assets/fonts/` belong to their respective creators, and all songs present within the game files `assets/audio/` are property of Ntreev Soft and are not covered by the license.  
 
 © 2026 juroimoh
