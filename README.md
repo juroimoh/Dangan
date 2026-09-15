@@ -47,11 +47,20 @@ This section will explain in detail all elements encountered in game, more in de
 
 <img width="450" height="316" alt="Dangan Manual" src="https://github.com/user-attachments/assets/3fa58201-8b11-4655-b0b6-d1a91b74d590" />
 
-**Ranks**
-As seen above, you are awarded a rank after surviving a level.
+**Gameplay**  
+You play in a 500x500 pixel box, avoiding projectiles while doing damage to the enemy. Holding down shoot fires bullets rapidly in sets of 3. Each of the bullets can individually do damage to the enemy, so at times it is advantageous to move close to the enemy and shoot.
 
-**Graze:**
-By narrowly avoiding bullets, you receive bonus points. This can heavily increase your final score.
+**Ranks**  
+As seen above, you are awarded a rank after surviving a level, namely SHII, KUU, GUTSU, MEI, and HAKU. The first 4 are obtained with an increasing final score (with different thresholds for each level), while HAKU is achieved by taking no damage in a level. 
+
+**Damage**  
+You take damage by colliding with the enemy, spinning blades, and bullets. This highlights your player icon red, and blocks you from gaining any score in that time. You also cannot take any damage until you recover from the previous damage. You have 8 lives visualized with 4 hearts, and losing all results in a death. Deaths are not counted as a statistic.
+
+**Graze**  
+By narrowly avoiding bullets, you receive bonus points. This can heavily increase your final score. Your graze value is rounded down to the nearest hundredth, and then multiplied by 10, so with a value of 3670 you would get a bonus graze score of 36,000.
+
+**Lore**  
+Currently there are two levels, with 3 being planned. You are trying to restore peace by defeating the princesses Sheru (level 1), Kiero (level 2) and ___ (level 3). You cannot 'win' Dangan yet, since not all levels have been made, but a rank of HAKU is considered defeating the princess.
 
 ## Project Files
 
