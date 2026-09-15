@@ -63,7 +63,7 @@ KEY_DISPLAY_POSITIONS = {
     "space": (575, 507),
 }
 
-PLAYER_HITBOX_INSET = 2
+PLAYER_HITBOX_INSET = 2 # Makes the hitboxes feel less punishing, partially because the 'glow' from bullets counts as hits.
 
 def _build_player_hitbox_mask(image, inset):
     width, height = image.get_size()
@@ -100,9 +100,9 @@ SURVIVAL_SCORE_RATE = 40.0
 SURVIVAL_SCORE_DOUBLE_TIME = 12 # 15 originally
 SPINNING_BLADE_INACTIVE_ALPHA = 45
 
-HIT_FLASH_DURATION = 0.5
+HIT_FLASH_DURATION = 0.7
 HIT_FLASH_START_SCALE = 0.25
-HIT_FLASH_END_SCALE = 1.5
+HIT_FLASH_END_SCALE = 1.8
 
 PLAYER_MAX_HEALTH = 8
 DAMAGE_PENALTY_PER_HIT = 1000
@@ -129,7 +129,7 @@ SFX_PATHS = {
     "enemy_shoot": "assets/audio/effects/enemy_shoot.ogg"
 }
 
-SFX_VOLUME_MULTIPLIERS = {"enemy_shoot": 1.8, "hit": 2, "shoot": 1.3, "graze": 0.01, "damage": 15}
+SFX_VOLUME_MULTIPLIERS = {"enemy_shoot": 1.8, "hit": 2, "shoot": 1.3, "graze": 0.03, "damage": 15}
 
 _sfx_cache = {}
 
@@ -1196,9 +1196,9 @@ class Level:
 
     def _hit_flash_intensity(self):
         if self.hit_timer <= 0:
-            return 0.0
+            return 0
         if self.hit_timer > HIT_FADE_WINDOW:
-            return 1.0
+            return 1
         return self.hit_timer / HIT_FADE_WINDOW
 
     def run(self, dt):
@@ -1746,9 +1746,9 @@ class Game:
         ]
 
         rank_thresholds_2 = [
-            ("MEI", 60000),
-            ("GUTSU", 35000),
-            ("KUU", 15000),
+            ("MEI", 110000),
+            ("GUTSU", 80000),
+            ("KUU", 40000),
             ("SHII", 0)
         ]
 

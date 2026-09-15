@@ -123,11 +123,17 @@
     {"time": 65.5, "type": "spawn_bullet", "x": 530, "y": 50, "angle": 90, "speed": 200, "sprite": "assets/entities/spike_bullet.png"},
 
     {"time": 66.5, "type": "move_enemy", "x": 282, "y": 282, "duration": 1.5},
-    {"time": 68, "type": "spawn_spinning_blades", "start_angle": 90, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 17},
-    {"time": 68, "type": "spawn_spinning_blades", "start_angle": 270, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 17},
-    {"time": 69.5, "type": "spawn_spinning_blades", "start_angle": 90, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 15.5},
-    {"time": 69.5, "type": "spawn_spinning_blades", "start_angle": 270, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 15.5},
-    {"time": 71, "type": "spawn_spinning_blades", "start_angle": 90, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 14},
-    {"time": 71, "type": "spawn_spinning_blades", "start_angle": 270, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 14}
+    {"time": 68, "type": "spawn_spinning_blades", "start_angle": 90, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 15},
+    {"time": 68, "type": "spawn_spinning_blades", "start_angle": 270, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 15},
+    {"time": 69.5, "type": "spawn_spinning_blades", "start_angle": 90, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 13.5},
+    {"time": 69.5, "type": "spawn_spinning_blades", "start_angle": 270, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 13.5},
+    {"time": 71, "type": "spawn_spinning_blades", "start_angle": 90, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 12},
+    {"time": 71, "type": "spawn_spinning_blades", "start_angle": 270, "spin_speed": 40, "spin_direction": -1, "switch_interval": 1.1, "start_active": false, "fade_in_duration": 0.2, "turn_on_duration": 0.3, "turn_off_duration": 0.3, "duration": 12},
+
+    {"time": 83, "type": "spawn_bullet", "x": 50, "y": 50, "angle": 45, "speed": 230, "movement_type": "homing", "homing_rate": 15, "sprite": "assets/entities/normal_bullet.png", "repetitions": 15, "delay": 0.5},
+    {"time": 83.1, "type": "spawn_bullet", "x": 550, "y": 50, "angle": 135, "speed": 230, "movement_type": "homing", "homing_rate": 15, "sprite": "assets/entities/normal_bullet.png", "repetitions": 15, "delay": 0.5},
+
+    {"time": 84, "type": "move_enemy", "x": 282, "y": -50, "duration": 7},
+    {"time": 84.5, "type": "spawn_bullet", "angle": 90, "speed": 170, "sprite": "assets/entities/spike_bullet.png", "repetitions": 5, "delay": 0.3}
   ]
 }
