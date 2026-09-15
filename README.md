@@ -8,6 +8,8 @@ Dodge their attacks, fire shots back, and achieve the highest ranks on all level
 
 <img width="450" height="316" alt="Dangan Gameplay" src="https://github.com/user-attachments/assets/de54f949-3100-41e1-bb47-6f20520e7da5" />
 
+🎧 Use headphones for the best experience.
+
 ## Controls
 
 - `↑ ← ↓ →` | Movement and Navigate (alternatively use `WASD`)  
