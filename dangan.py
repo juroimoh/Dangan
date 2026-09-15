@@ -818,7 +818,7 @@ class Level:
             "color": color,
             "movement_type": movement_type,
             "time_alive": 0.0,
-            "curve_rate": b_params.get("curve_rate", 45.0), # deg/sec
+            "curve_rate": b_params.get("curve_rate", 45.0), # Degrees per seccond
             "zigzag_freq": b_params.get("zigzag_freq", 8.0),
             "zigzag_amp": b_params.get("zigzag_amp", 150.0),
             "accel": b_params.get("accel", 50.0),
