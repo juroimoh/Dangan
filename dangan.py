@@ -126,16 +126,10 @@ SFX_PATHS = {
     "level_start": "assets/audio/effects/level_start.ogg",
     "pause": "assets/audio/effects/pause.ogg",
     "locked": "assets/audio/effects/locked.ogg",
-    "enemy_shoot": "assets/audio/effects/enemy_shoot.ogg",
+    "enemy_shoot": "assets/audio/effects/enemy_shoot.ogg"
 }
 
-SFX_VOLUME_MULTIPLIERS = {
-    "enemy_shoot": 1.8,
-    "hit": 2,
-    "shoot": 1.3,
-    "graze": 0.01,
-    "damage": 5,
-}
+SFX_VOLUME_MULTIPLIERS = {"enemy_shoot": 1.8, "hit": 2, "shoot": 1.3, "graze": 0.01, "damage": 15}
 
 _sfx_cache = {}
 
@@ -202,12 +196,21 @@ LEVEL_BOSS_NAMES = {
 }
 
 LEVEL_BOSS_IMAGE_PATHS = {
-    "level1": "assets/entities/boss_level1.png",
-    "level2": "assets/entities/boss_level2.png",
-    "level3": "assets/entities/boss_level3.png",
-    "level4": "assets/entities/boss_level4.png",
-    "level5": "assets/entities/boss_level5.png",
+    "level1": "assets/sheru.png",
+    "level2": "assets/kiero.png",
 }
+
+boss_images = {
+    key: py.image.load(path).convert_alpha()
+    for key, path in LEVEL_BOSS_IMAGE_PATHS.items()
+}
+
+def draw_boss(surface, key, x, y, scale):
+    image = boss_images[key]
+    width = int(image.get_width() * scale)
+    height = int(image.get_height() * scale)
+    scaled = py.transform.smoothscale(image, (width, height))
+    surface.blit(scaled, (x, y))
 
 LEVEL_STAT_DISPLAY_CONFIG = [
     {
@@ -222,7 +225,7 @@ LEVEL_STAT_DISPLAY_CONFIG = [
         "highscore_pos": (579, 148),
         "plays_pos": (635, 186),
         "boss_name_pos": (448, 148),
-        "boss_image_pos": (560, 400),
+        "boss_image_pos": (260, 200),
         "locked_message_pos": (560, 268),
     },
     {
@@ -507,6 +510,8 @@ class MainMenu:
             y_pos = 397 + i * 48
             self.display.blit(opt_surf, (x_pos, y_pos))
 
+        draw_boss(self.display, "level2", 10, 100, 0.5)
+
 class Manual:
     def __init__(self, display, gameStateManager):
         self.display = display
@@ -550,15 +555,6 @@ class LevelSelect:
         if cache_key not in self._stat_font_cache:
             self._stat_font_cache[cache_key] = py.font.Font(font_path, font_size)
         return self._stat_font_cache[cache_key]
-
-    def _get_boss_image(self, level_key):
-        if level_key not in self._boss_image_cache:
-            image = None
-            path = LEVEL_BOSS_IMAGE_PATHS.get(level_key)
-            if path and os.path.exists(path):
-                image = py.image.load(path).convert_alpha()
-            self._boss_image_cache[level_key] = image
-        return self._boss_image_cache[level_key]
 
     def _get_rank_image(self, rank, size):
         base_image = RANK_IMAGES.get(rank)
@@ -634,9 +630,16 @@ class LevelSelect:
                 boss_name_surf = stat_font.render(boss_name, True, color)
                 self.display.blit(boss_name_surf, config["boss_name_pos"])
 
-                boss_image = self._get_boss_image(level_key)
-                if boss_image is not None:
-                    self.display.blit(boss_image, config["boss_image_pos"])
+                if self.selected_index == 0:
+                    draw_boss(self.display, "level1", 390, 155, 0.4)
+                elif self.selected_index == 1:
+                    draw_boss(self.display, "level2", 380, 174, 0.38)
+                elif self.selected_index == 2:
+                    draw_boss(self.display, "level3", 260, 200, 2)
+                elif self.selected_index == 3:
+                    draw_boss(self.display, "level4", 260, 200, 2)
+                elif self.selected_index == 4:
+                    draw_boss(self.display, "level5", 260, 200, 2)
 
         self.display.blit(levels_fg_img, (0, 0))
 
@@ -1640,10 +1643,7 @@ class LevelResultScreen:
                 play_sfx("click")
                 self.confirm_ready = True
 
-        if self.background_img is not None:
-            self.display.blit(self.background_img, (0, 0))
-        else:
-            self.display.fill(BACKGROUND_COLOR)
+        self.display.blit(self.background_img, (0, 0))
 
         if self.show_rating:
             score, graze, graze_bonus, damage_taken, damage_penalty, final_score, rank = self._compute_rating()
@@ -1690,6 +1690,17 @@ class LevelResultScreen:
             rank_label_x = rank_x + rank_img.get_width() / 2 - rank_label_surf.get_width() / 2 + 44
             rank_label_y = rank_y + rank_img.get_height() + 80
             self.display.blit(rank_label_surf, (rank_label_x, rank_label_y))
+
+            if self.level_ref.level_key == "level1":
+                draw_boss(self.display, "level1", 20, 250, 0.35)
+            elif self.level_ref.level_key == "level2":
+                draw_boss(self.display, "level2", -15, 280, 0.33)
+            elif self.level_ref.level_key == "level3":
+                draw_boss(self.display, "level3", 500, 150, 0)
+            elif self.level_ref.level_key == "level4":
+                draw_boss(self.display, "level4", 500, 150, 1)
+            elif self.level_ref.level_key == "level5":
+                draw_boss(self.display, "level5", 500, 150, 1)
 
         for i, option in enumerate(self.options):
             is_selected = (i == self.selected_index)
