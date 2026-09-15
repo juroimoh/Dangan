@@ -2,7 +2,7 @@
 
 # Dangan (弾丸)
 
-Welcome to __Dangan_! In this challenging topdown bullet-hell game, you must defeat all ~~three~~ two (evil) princesses to win.  
+Welcome to _Dangan_! In this challenging topdown bullet-hell game, you must defeat all ~~three~~ two (evil) princesses to win.  
 Dodge their attacks, fire shots back, and achieve the highest ranks on all levels!
 
 <img width="450" height="316" alt="Dangan Gameplay" src="https://github.com/user-attachments/assets/de54f949-3100-41e1-bb47-6f20520e7da5" />
