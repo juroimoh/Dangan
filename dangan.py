@@ -1593,8 +1593,8 @@ class Game: # The master class with logic that runs everything
         ]
 
         rank_thresholds_2 = [
-            ("MEI", 110000),
-            ("GUTSU", 90000),
+            ("MEI", 100000),
+            ("GUTSU", 80000),
             ("KUU", 60000),
             ("SHII", 0)
         ]
