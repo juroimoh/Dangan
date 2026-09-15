@@ -1,6 +1,6 @@
 > this page is a work in progress  
-> for Qianxun Chen → if you want to unlock the second level without playing, edit statistics.csv and edit the first rank to MEI
-> if commits continue past the deadline, i am working on level 2, no code is changing
+> for Qianxun Chen → if you want to unlock the second level without playing, edit `statistics.csv` and edit the first rank to MEI  
+> level 2 is approximately 70% done (September 15, 23:59)
 
 # Dangan (弾丸)
 
