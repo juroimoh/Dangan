@@ -1,5 +1,5 @@
 > this page is a work in progress  
-> For Qianxun Chen → If you want to unlock the second level without playing, edit statistics.csv and edit the first rank to MEI.
+> for Qianxun Chen → if you want to unlock the second level without playing, edit statistics.csv and edit the first rank to MEI
 
 # Dangan (弾丸)
 
