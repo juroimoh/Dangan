@@ -4,7 +4,7 @@ from pygame import mixer
 py.init()
 mixer.init()
 
-# screen setup
+# Screen setup
 SCREEN_WIDTH, SCREEN_HEIGHT = 900, 600
 screen = py.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 py.display.set_caption('Dangan')
@@ -63,7 +63,8 @@ KEY_DISPLAY_POSITIONS = {
     "space": (575, 507),
 }
 
-PLAYER_HITBOX_INSET = 2 # Makes the hitboxes feel less punishing, partially because the 'glow' from bullets counts as hits.
+PLAYER_HITBOX_INSET = 2 # Makes the hitboxes feel less punishing, partially because the 'glow' from bullets counts in their hitboxes
+                        # Rather than make the hitbox of every bullet smaller, making the player hitbox smaller does the same thing
 
 def _build_player_hitbox_mask(image, inset):
     width, height = image.get_size()
@@ -80,7 +81,7 @@ player_flash_img.fill((220, 90, 90, 255), special_flags=py.BLEND_RGBA_MULT)
 
 py.key.set_repeat(250, 50)
 
-# colors
+# Constants
 BACKGROUND_COLOR = (16, 15, 22)
 FONT_COLOR = (214, 255, 255)
 HIGHLIGHT_COLOR = (255, 215, 0)
@@ -88,11 +89,6 @@ DISABLED_COLOR = (143, 122, 122)
 HUD_DISABLED_COLOR = (150, 165, 165)
 
 BASE_SPEED = 250
-
-DEBUG_END_SCREEN_SKIP = True
-DEBUG_TEST_SCORE = 66000
-DEBUG_TEST_GRAZE = 250
-DEBUG_TEST_HEALTH = 8
 
 HIT_TIMEOUT_DURATION = 2.0
 HIT_FADE_WINDOW = 0.4
@@ -122,7 +118,7 @@ SFX_PATHS = {
     "hit": "assets/audio/effects/hit.ogg",
     "damage": "assets/audio/effects/damage.ogg",
     "graze": "assets/audio/effects/graze.ogg",
-    "blade_on": "assets/audio/effects/blade_on.ogg",
+    "blade_on": "assets/audio/effects/blade_on .ogg",
     "level_start": "assets/audio/effects/level_start.ogg",
     "pause": "assets/audio/effects/pause.ogg",
     "locked": "assets/audio/effects/locked.ogg",
@@ -150,31 +146,29 @@ def play_sfx(name):
         sound.set_volume(min(1.0, SFX_VOLUME * multiplier))
         sound.play()
 
-OPTIONS_FILE = "options.csv"
-
-def load_options():
+def load_options(): # Create options.csv file if not created
     global SFX_VOLUME
     defaults = {"music_volume": 50, "sfx_volume": 50}
-    if not os.path.exists(OPTIONS_FILE):
+    if not os.path.exists("options.csv"):
         return defaults
-    with open(OPTIONS_FILE, newline="") as f:
+    with open("options.csv", newline="") as f:
         for key, value in csv.reader(f):
             if key in defaults:
                 defaults[key] = int(value)
     return defaults
 
-def save_options(music_volume, sfx_volume):
-    with open(OPTIONS_FILE, "w", newline="") as f:
+def save_options(music_volume, sfx_volume): # Update options.csv
+    with open("options.csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["music_volume", music_volume])
         writer.writerow(["sfx_volume", sfx_volume])
 
-LEVEL_UNLOCK_REQUIREMENTS = {
+LEVEL_UNLOCK_REQUIREMENTS = { # Many dictionaries contain information up to level 5, incase I add levels in the future
     "level1": None,
     "level2": ("level1", "MEI"),
-    "level3": ("level2", "MEI"),
-    "level4": ("level3", "MEI"),
-    "level5": ("level4", "MEI"),
+    "level3": ("level2", "HAKU"),
+    "level4": ("level3", "HAKU"),
+    "level5": ("level4", "HAKU"),
 }
 
 def is_level_unlocked(level_key, stats_manager):
@@ -205,89 +199,19 @@ boss_images = {
     for key, path in LEVEL_BOSS_IMAGE_PATHS.items()
 }
 
-def draw_boss(surface, key, x, y, scale):
+def draw_boss(surface, key, x, y, scale): # Lets me visualize the characters wherever I like, with scalable size
     image = boss_images[key]
     width = int(image.get_width() * scale)
     height = int(image.get_height() * scale)
     scaled = py.transform.smoothscale(image, (width, height))
     surface.blit(scaled, (x, y))
 
-LEVEL_STAT_DISPLAY_CONFIG = [
-    {
-        "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
-        "font_size": 24,
-        "color": (226, 190, 189),
-        "rank_pos": (730, 510),
-        "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf",
-        "rank_font_size": 28,
-        "rank_image_pos": (650, 300),
-        "rank_image_size": (190, 190),
-        "highscore_pos": (579, 148),
-        "plays_pos": (635, 186),
-        "boss_name_pos": (448, 148),
-        "boss_image_pos": (260, 200),
-        "locked_message_pos": (560, 268),
-    },
-    {
-        "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
-        "font_size": 24,
-        "color": (226, 190, 189),
-        "rank_pos": (730, 510),
-        "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf",
-        "rank_font_size": 28,
-        "rank_image_pos": (650, 300),
-        "rank_image_size": (190, 190),
-        "highscore_pos": (579, 148),
-        "plays_pos": (635, 186),
-        "boss_name_pos": (448, 148),
-        "boss_image_pos": (560, 400),
-        "locked_message_pos": (500, 330),
-    },
-    {
-        "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
-        "font_size": 24,
-        "color": (226, 190, 189),
-        "rank_pos": (730, 510),
-        "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf",
-        "rank_font_size": 28,
-        "rank_image_pos": (650, 300),
-        "rank_image_size": (190, 190),
-        "highscore_pos": (579, 148),
-        "plays_pos": (635, 186),
-        "boss_name_pos": (448, 148),
-        "boss_image_pos": (560, 400),
-        "locked_message_pos": (560, 330),
-    },
-    {
-        "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
-        "font_size": 24,
-        "color": (226, 190, 189),
-        "rank_pos": (730, 510),
-        "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf",
-        "rank_font_size": 28,
-        "rank_image_pos": (650, 300),
-        "rank_image_size": (190, 190),
-        "highscore_pos": (579, 148),
-        "plays_pos": (635, 186),
-        "boss_name_pos": (448, 148),
-        "boss_image_pos": (560, 400),
-        "locked_message_pos": (560, 330),
-    },
-    {
-        "font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf",
-        "font_size": 24,
-        "color": (226, 190, 189),
-        "rank_pos": (730, 510),
-        "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf",
-        "rank_font_size": 28,
-        "rank_image_pos": (650, 300),
-        "rank_image_size": (190, 190),
-        "highscore_pos": (579, 148),
-        "plays_pos": (635, 186),
-        "boss_name_pos": (448, 148),
-        "boss_image_pos": (560, 400),
-        "locked_message_pos": (560, 330),
-    },
+LEVEL_STAT_DISPLAY_CONFIG = [ # This is pretty redundant, only the locked message position is unique, which can be defined later anyways (i will update if I have time)
+    {"font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf", "font_size": 24, "color": (226, 190, 189), "rank_pos": (730, 510), "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", "rank_font_size": 28, "rank_image_pos": (650, 300), "rank_image_size": (190, 190), "highscore_pos": (579, 148), "plays_pos": (635, 186), "boss_name_pos": (448, 148), "locked_message_pos": (560, 330)},
+    {"font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf", "font_size": 24, "color": (226, 190, 189), "rank_pos": (730, 510), "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", "rank_font_size": 28, "rank_image_pos": (650, 300), "rank_image_size": (190, 190), "highscore_pos": (579, 148), "plays_pos": (635, 186), "boss_name_pos": (448, 148), "locked_message_pos": (500, 330)},
+    {"font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf", "font_size": 24, "color": (226, 190, 189), "rank_pos": (730, 510), "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", "rank_font_size": 28, "rank_image_pos": (650, 300), "rank_image_size": (190, 190), "highscore_pos": (579, 148), "plays_pos": (635, 186), "boss_name_pos": (448, 148), "locked_message_pos": (560, 330)},
+    {"font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf", "font_size": 24, "color": (226, 190, 189), "rank_pos": (730, 510), "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", "rank_font_size": 28, "rank_image_pos": (650, 300), "rank_image_size": (190, 190), "highscore_pos": (579, 148), "plays_pos": (635, 186), "boss_name_pos": (448, 148), "locked_message_pos": (560, 330)},
+    {"font_path": "assets/fonts/VCR_OSD_MONO_1.001.ttf", "font_size": 24, "color": (226, 190, 189), "rank_pos": (730, 510), "rank_font_path": "assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", "rank_font_size": 28, "rank_image_pos": (650, 300), "rank_image_size": (190, 190), "highscore_pos": (579, 148), "plays_pos": (635, 186), "boss_name_pos": (448, 148), "locked_message_pos": (560, 330)}
 ]
 
 LEVEL_BACKGROUND_IMAGE_PATHS = {
@@ -298,7 +222,7 @@ LEVEL_BACKGROUND_IMAGE_PATHS = {
     "level5": "assets/backgrounds/level_five_behind.png",
 }
 
-class StatisticsManager:
+class StatisticsManager: # Everything to do with saving scores using statistics.csv
     def __init__(self, filepath=STATISTICS_CSV_PATH, level_keys=None):
         self.filepath = filepath
         self.level_keys = level_keys or ["level1", "level2", "level3", "level4", "level5"]
@@ -308,7 +232,7 @@ class StatisticsManager:
     def _default_row(self):
         return {"rank": "NONE", "highscore": 0, "plays": 0}
 
-    def _load(self):
+    def _load(self): # Loads statistics.csv to show level stats (this comes first because other classes use it)
         if os.path.exists(self.filepath):
             with open(self.filepath, newline="") as file:
                 reader = csv.DictReader(file)
@@ -344,7 +268,7 @@ class StatisticsManager:
     def get(self, level_key):
         return self.data.get(level_key, self._default_row())
 
-    def record_play(self, level_key):
+    def record_play(self, level_key): # Called immediately when a level is opened, increasing plays
         row = self.data.setdefault(level_key, self._default_row())
         row["plays"] += 1
         self._save()
@@ -358,8 +282,8 @@ class StatisticsManager:
             row["rank"] = rank
         self._save()
 
-# logic
-class GameStateManager:
+# Logic
+class GameStateManager: # This was all taken from a tutorial on YouTube, on how to set up different scenes in games
     def __init__(self, currentState):
         self.currentState = currentState
         self.states = {}
@@ -422,7 +346,7 @@ class GameStateManager:
             if hasattr(new_obj, 'on_enter'):
                 new_obj.on_enter()
 
-    def draw_transition(self, display, dt):
+    def draw_transition(self, display, dt): # Smooth transitions (this was not part of the tutorial), one of my favorite additions
         if not self.is_transitioning:
             return
 
@@ -441,30 +365,11 @@ class GameStateManager:
         self.fade_surface.set_alpha(int(self.fade_alpha))
         display.blit(self.fade_surface, (0, 0))
 
-class Splash:
-    def __init__(self, display, gameStateManager):
-        self.display = display
-        self.gameStateManager = gameStateManager
-        self.timer = 0.0
-
-    def handle_input(self, events):
-        for event in events:
-            if event.type == py.KEYDOWN:
-                if event.key in (py.K_SPACE, py.K_ESCAPE, py.K_RETURN):
-                    self.gameStateManager.set_state('main_menu')
-                    play_sfx("click")
-
-    def run(self, dt):
-        self.timer += dt
-        if self.timer >= 3.0:
-            self.gameStateManager.set_state('main_menu')
-        self.display.blit(cover_img, (0, 0))
-
 class MainMenu:
     def __init__(self, display, gameStateManager):
         self.display = display
         self.gameStateManager = gameStateManager
-        self.options = ["LEVEL", "OPTIONS", "MANUAL", "QUIT"]
+        self.options = ["LEVEL", "OPTIONS", "MANUAL", "QUIT"] # Used often whenever sets of buttons are present
         self.selected_index = 0
         self.menu_font = py.font.Font("assets/fonts/VCR_OSD_MONO_1.001.ttf", 45)
 
@@ -476,11 +381,11 @@ class MainMenu:
             if event.type == py.KEYDOWN:
                 if event.key in (py.K_UP, py.K_w):
                     play_sfx("select")
-                    self.selected_index = (self.selected_index - 1) % len(self.options)
+                    self.selected_index = (self.selected_index - 1) % len(self.options) # Lets you cycle through the options using %
                 elif event.key in (py.K_DOWN, py.K_s):
                     play_sfx("select")
                     self.selected_index = (self.selected_index + 1) % len(self.options)
-                elif event.key in (py.K_SPACE, py.K_RETURN):
+                elif event.key in (py.K_SPACE, py.K_RETURN): # Depending what option you are on, selects that scene
                     play_sfx("click")
                     if self.selected_index == 0:
                         self.gameStateManager.set_state('level_select')
@@ -512,7 +417,7 @@ class MainMenu:
 
         draw_boss(self.display, "level2", 10, 100, 0.5)
 
-class Manual:
+class Manual: # Very basic, one button, and one image
     def __init__(self, display, gameStateManager):
         self.display = display
         self.gameStateManager = gameStateManager
@@ -527,7 +432,6 @@ class Manual:
 
     def run(self, dt):
         self.display.blit(manual_img, (0, 0))
-
         back_surf = self.esc_font.render("<BACK>", True, (255, 255, 255))
         back_x = 81 - back_surf.get_width() // 2
         back_y = 546
@@ -550,7 +454,7 @@ class LevelSelect:
         self._stat_font_cache = {}
         self._boss_image_cache = {}
 
-    def _get_stat_font(self, font_path, font_size):
+    def _get_stat_font(self, font_path, font_size): # This function is unnecessary, connected with the dictionary lines 209-214 (the fonts don't change)
         cache_key = (font_path, font_size)
         if cache_key not in self._stat_font_cache:
             self._stat_font_cache[cache_key] = py.font.Font(font_path, font_size)
@@ -571,7 +475,7 @@ class LevelSelect:
     def on_enter(self):
         self.selected_index = 0
 
-    def handle_input(self, events):
+    def handle_input(self, events): # Logic to cycle between options
         for event in events:
             if event.type == py.KEYDOWN:
                 if event.key in (py.K_UP, py.K_w):
@@ -595,7 +499,7 @@ class LevelSelect:
 
     def run(self, dt):
         self.display.fill(BACKGROUND_COLOR)
-        self.display.blit(levels_bg_img, (0, 0))
+        self.display.blit(levels_bg_img, (0, 0)) # Always comes first when rendering to layer properly.
 
         if self.selected_index < len(self.level_keys):
             level_key = self.level_keys[self.selected_index]
@@ -641,7 +545,7 @@ class LevelSelect:
                 elif self.selected_index == 4:
                     draw_boss(self.display, "level5", 260, 200, 2)
 
-        self.display.blit(levels_fg_img, (0, 0))
+        self.display.blit(levels_fg_img, (0, 0)) # Foreground image
 
         for i in range(5):
             option = self.options[i]
@@ -650,7 +554,7 @@ class LevelSelect:
 
             if is_selected:
                 text_str = f"<{option}>"
-                color = (255, 250, 246) if is_clickable else (178, 152, 152)
+                color = (255, 250, 246) if is_clickable else (178, 152, 152) # A very cool way to use if-else statements without using multiple lines
             else:
                 text_str = option
                 color = (229, 207, 207) if is_clickable else DISABLED_COLOR
@@ -661,7 +565,7 @@ class LevelSelect:
         esc_option = self.options[5]
         is_esc_selected = (self.selected_index == 5)
 
-        if is_esc_selected:
+        if is_esc_selected: # Back button isn't aligned with the 5 levels so it's separate
             esc_text = f"<{esc_option}>"
             esc_color = (255, 250, 246)
         else:
@@ -673,7 +577,7 @@ class LevelSelect:
         esc_y = 546
         self.display.blit(esc_surf, (esc_x, esc_y))
 
-class Settings:
+class Settings: # Also known as 'options'
     def __init__(self, display, gameStateManager):
         global SFX_VOLUME
         self.display = display
@@ -790,7 +694,7 @@ class Level:
         self.enemy_img = py.image.load(enemy_image_path).convert_alpha()
         self.enemy_mask = py.mask.from_surface(self.enemy_img)
 
-        with open(self.level_file, "r") as file:
+        with open(self.level_file, "r") as file: # Read mode
             self.level_data = json.load(file)
 
         self.music_path = self.level_data["music"]
@@ -799,14 +703,12 @@ class Level:
         self.background_img_cache = {}
         self.preload_bullet_sprites()
 
-        self.action_library = {
+        self.action_library = { # Defines actions from the .json in a dictionary so it can understand the .json
             "spawn_bullet": self.action_spawn_bullet,
             "spawn_spread": self.action_spawn_spread,
             "spawn_ring": self.action_spawn_ring,
             "move_enemy": self.action_move_enemy,
-            "move_enemy_sine": self.action_move_enemy_sine,
             "move_enemy_path": self.action_move_enemy_path,
-            "move_enemy_circle": self.action_move_enemy_circle,
             "move_player": self.action_move_player,
             "spawn_spinning_blades": self.action_spawn_spinning_blades
         }
@@ -816,7 +718,7 @@ class Level:
         self.title_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 30)
         self.subtitle_font = py.font.Font("assets/fonts/DFPOPCorn-W12-WINP-RKSJ-H.ttf", 25)
 
-    def queue_sfx(self, name, count=1, stagger=0.02):
+    def queue_sfx(self, name, count=1, stagger=0.02): # Following functions have no concrete ordering
         for i in range(count):
             self.pending_sfx.append({"name": name, "timer": i * stagger})
 
@@ -852,7 +754,7 @@ class Level:
             self.bullet_sprite_cache[sprite_path] = (image, mask)
         return self.bullet_sprite_cache[sprite_path]
 
-    def _get_level_background(self):
+    def _get_level_background(self): # Using Claude, it made some of these functions 'private', not sure if this is important
         if self.level_key not in self.background_img_cache:
             path = LEVEL_BACKGROUND_IMAGE_PATHS.get(self.level_key)
             image = py.image.load(path).convert_alpha()
@@ -865,7 +767,7 @@ class Level:
             if sprite:
                 self.get_bullet_sprite(sprite)
 
-    def _rotate_blade_image(self, image, pivot_pos, angle):
+    def _rotate_blade_image(self, image, pivot_pos, angle): # Complicated math
         origin_local = (image.get_width() / 2, image.get_height())
         image_rect = image.get_rect(topleft=(pivot_pos[0] - origin_local[0], pivot_pos[1] - origin_local[1]))
         offset_center_to_pivot = py.math.Vector2(pivot_pos) - image_rect.center
@@ -875,7 +777,7 @@ class Level:
         rotated_rect = rotated_image.get_rect(center=rotated_center)
         return rotated_image, rotated_rect
 
-    def take_damage(self, hit_x=None, hit_y=None):
+    def take_damage(self, hit_x=None, hit_y=None): # Damage system, shows a flash and checks if you die
         if hit_x is None:
             hit_x = self.player.x + self.player_width / 2
         if hit_y is None:
@@ -890,7 +792,7 @@ class Level:
         if self.health <= 0:
             self.gameStateManager.set_state(f"{self.level_key}_lose")
 
-# action library
+# Action library for the dictionary for the level .json
     def _fire_single_bullet(self, b_params):
         x = b_params.get("x", self.enemy_x + self.enemy_img.get_width() / 2)
         y = b_params.get("y", self.enemy_y + self.enemy_img.get_height() / 2)
@@ -1037,27 +939,10 @@ class Level:
         self.enemy_move_duration = event.get("duration", 1.0)
         self.enemy_move_elapsed = 0.0
 
-    def action_move_enemy_sine(self, event):
-        self.enemy_movement_mode = "sine"
-        self.enemy_start_pos = (self.enemy_x, self.enemy_y)
-        self.enemy_target_pos = (event.get("x", self.enemy_x), event.get("y", self.enemy_y))
-        self.enemy_move_duration = event.get("duration", 2.0)
-        self.sine_amp = event.get("amplitude", 40.0)
-        self.sine_freq = event.get("frequency", 2.0)
-        self.enemy_move_elapsed = 0.0
-
     def action_move_enemy_path(self, event):
         self.enemy_movement_mode = "path"
         self.enemy_path = event.get("path", [])
         self.enemy_path_index = 0
-
-    def action_move_enemy_circle(self, event):
-        self.enemy_movement_mode = "circle"
-        self.circle_center = (event.get("center_x", 300), event.get("center_y", 150))
-        self.circle_radius = event.get("radius", 80.0)
-        self.circle_speed = event.get("speed", 90.0)
-        self.enemy_move_duration = event.get("duration", 3.0)
-        self.enemy_move_elapsed = 0.0
 
     def action_move_player(self, event):
         self.player.x = event.get("x", self.player.x)
@@ -1165,16 +1050,6 @@ class Level:
                 if event.key == py.K_ESCAPE:
                     self.gameStateManager.set_state('level_select')
                     play_sfx("click")
-                elif DEBUG_END_SCREEN_SKIP and event.key == py.K_F1:
-                    self.score = DEBUG_TEST_SCORE
-                    self.graze_score = DEBUG_TEST_GRAZE
-                    self.health = DEBUG_TEST_HEALTH
-                    self.gameStateManager.set_state(f"{self.level_key}_win")
-                elif DEBUG_END_SCREEN_SKIP and event.key == py.K_F2:
-                    self.score = DEBUG_TEST_SCORE
-                    self.graze_score = DEBUG_TEST_GRAZE
-                    self.health = 0
-                    self.gameStateManager.set_state(f"{self.level_key}_lose")
 
     def draw_player(self):
         self.display.blit(player_img, (self.player.x, self.player.y))
@@ -1240,14 +1115,14 @@ class Level:
             if self.level_time >= event.get("time", 0):
                 action_type = event.get("type")
                 if action_type in self.action_library:
-                    self.action_library[action_type](event)
+                    self.action_library[action_type](event) # type: ignore <- This is cool
                 else:
-                    print(f"Warning: Unknown action type '{action_type}' in JSON.")
+                    print(f"Warning: Unknown action type '{action_type}' in JSON.") # Crash handling
                 self.current_event_index += 1
             else:
                 break
 
-        for entry in self.pending_sfx[:]:
+        for entry in self.pending_sfx[:]: # Some sound effects in game are queued first, then played: this plays them
             entry["timer"] -= dt
             if entry["timer"] <= 0:
                 play_sfx(entry["name"])
@@ -1258,17 +1133,6 @@ class Level:
             t = min(1.0, self.enemy_move_elapsed / self.enemy_move_duration)
             self.enemy_x = self.enemy_start_pos[0] + (self.enemy_target_pos[0] - self.enemy_start_pos[0]) * t
             self.enemy_y = self.enemy_start_pos[1] + (self.enemy_target_pos[1] - self.enemy_start_pos[1]) * t
-            if t >= 1.0:
-                self.enemy_movement_mode = "idle"
-
-        elif self.enemy_movement_mode == "sine":
-            self.enemy_move_elapsed += dt
-            t = min(1.0, self.enemy_move_elapsed / self.enemy_move_duration)
-            base_x = self.enemy_start_pos[0] + (self.enemy_target_pos[0] - self.enemy_start_pos[0]) * t
-            base_y = self.enemy_start_pos[1] + (self.enemy_target_pos[1] - self.enemy_start_pos[1]) * t
-            sine_offset = math.sin(self.enemy_move_elapsed * self.sine_freq * math.pi * 2) * self.sine_amp
-            self.enemy_x = base_x
-            self.enemy_y = base_y + sine_offset
             if t >= 1.0:
                 self.enemy_movement_mode = "idle"
 
@@ -1288,14 +1152,6 @@ class Level:
             else:
                 self.enemy_movement_mode = "idle"
 
-        elif self.enemy_movement_mode == "circle":
-            self.enemy_move_elapsed += dt
-            angle = math.radians(self.enemy_move_elapsed * self.circle_speed)
-            self.enemy_x = self.circle_center[0] + self.circle_radius * math.cos(angle)
-            self.enemy_y = self.circle_center[1] + self.circle_radius * math.sin(angle)
-            if self.enemy_move_elapsed >= self.enemy_move_duration:
-                self.enemy_movement_mode = "idle"
-
         keys = py.key.get_pressed()
         right_pressed = keys[py.K_RIGHT] or keys[py.K_d]
         left_pressed = keys[py.K_LEFT] or keys[py.K_a]
@@ -1303,11 +1159,11 @@ class Level:
         down_pressed = keys[py.K_DOWN] or keys[py.K_s]
 
         if (right_pressed and up_pressed) or (right_pressed and down_pressed) or (left_pressed and up_pressed) or (left_pressed and down_pressed):
-            self.player_speed = round(self.BASE_SPEED * 0.707)
+            self.player_speed = round(self.BASE_SPEED * 0.707) # Diagonal movement being same speed relative to horizontal or vertical movement (one of the first things added)
         else:
             self.player_speed = self.BASE_SPEED
 
-        if left_pressed and self.player.left > 50:
+        if left_pressed and self.player.left > 50: # Stop the player from leaving
             self.player_x -= self.player_speed * dt
             self.player.x = round(self.player_x)
             if self.player.left < 50:
@@ -1328,7 +1184,7 @@ class Level:
             if self.player.bottom > 550:
                 self.player.y = 550 - self.player_width
 
-        if keys[py.K_SPACE] and self.player_bullet_reload <= 0 and self.hit_timer <= 0:
+        if keys[py.K_SPACE] and self.player_bullet_reload <= 0 and self.hit_timer <= 0: # From the early prototype, shooting creates 3 bullets
             play_sfx("shoot")
             self.player_bullet_reload = 0.15
             player_bullet_x = self.player.x + self.player_width / 2 - self.player_bullet_width / 2
@@ -1343,7 +1199,7 @@ class Level:
         screen.fill(BACKGROUND_COLOR)
         screen.blit(self._get_level_background(), (0, 0))
 
-        for spinner in self.spinning_blades[:]:
+        for spinner in self.spinning_blades[:]: # Spinning blade logic, I don't understand much here
             spinner["rotation"] += spinner["spin_speed"] * spinner["spin_direction"] * dt
             spinner["spawn_elapsed"] += dt
             spinner["lifetime_elapsed"] += dt
@@ -1396,7 +1252,7 @@ class Level:
                 if self.player_mask.overlap(blade_mask, (red_rect.x - self.player.x, red_rect.y - self.player.y)):
                     self.take_damage()
 
-        for b in self.player_bullets[:]:
+        for b in self.player_bullets[:]: # Checks the 3 player bullets and if they hit the enemy independently
             b[1] -= self.player_bullet_speed * dt
             if self.enemy_mask.overlap(player_bullet_mask, (b[0] - self.enemy_x, b[1] - self.enemy_y)):
                 self.score += 100
@@ -1426,8 +1282,7 @@ class Level:
             if b[1] < 0:
                 self.player_bulletsr.remove(b)
 
-# bullet library
-        for b in self.enemy_bullets[:]:
+        for b in self.enemy_bullets[:]: # Bullet library for calculating movements
             b["time_alive"] += dt
             m_type = b["movement_type"]
 
@@ -1524,15 +1379,15 @@ class Level:
             scaled_flash.set_alpha(int(255 * (1.0 - t)))
             screen.blit(scaled_flash, (flash["x"] - scaled_w / 2, flash["y"] - scaled_h / 2))
 
-        self.draw_enemy()
+        self.draw_enemy() # Draws the visuals
         self.draw_player_bullets()
         self.draw_player()
 
-        self.display.blit(border_img, (0, 0))
+        self.display.blit(border_img, (0, 0)) # Border last, so everything gameplay-related stays inside the playable field
 
         hud_color = HUD_DISABLED_COLOR if self.hit_timer > 0 else (226, 190, 189)
 
-        score_surf = self.title_font.render(f"SCORE:", True, hud_color)
+        score_surf = self.title_font.render(f"SCORE:", True, hud_color) # Draw score
         screen.blit(score_surf, (585, 116))
         score_surf_main = self.subtitle_font.render(f"{self.score:07d}", True, hud_color)
         screen.blit(score_surf_main, (720, 120))
@@ -1596,7 +1451,7 @@ class LevelResultScreen:
             _, _, _, _, _, final_score, rank = self._compute_rating()
             self.stats_manager.record_result(self.level_key, final_score, rank)
 
-    def _compute_rating(self):
+    def _compute_rating(self): # Calculates the final score
         score = self.level_ref.score
         graze = self.level_ref.graze_score
         damage_taken = self.level_ref.damage_taken
@@ -1604,10 +1459,10 @@ class LevelResultScreen:
         damage_penalty = damage_taken * DAMAGE_PENALTY_PER_HIT
         final_score = score + graze_bonus - damage_penalty
 
-        if damage_taken == 0:
+        if damage_taken == 0: # No death rewards the HAKU rank
             rank = "HAKU"
         else:
-            rank = "SHII"
+            rank = "SHII" # Default rank: is immediately updated if the final_score is above any threshold for a better rank
             for rank_name, threshold in self.level_ref.rank_thresholds:
                 if rank_name == "HAKU":
                     continue
@@ -1682,8 +1537,8 @@ class LevelResultScreen:
             scaled_w = int(rank_img.get_width() * RANK_IMAGE_SCALE)
             scaled_h = int(rank_img.get_height() * RANK_IMAGE_SCALE)
             rank_img = py.transform.smoothscale(rank_img, (scaled_w, scaled_h))
-            rank_x = 540 # was SCREEN_WIDTH - rank_img.get_width() - 60
-            rank_y = 50 # was SCREEN_HEIGHT / 2 - rank_img.get_height() / 2
+            rank_x = 540 # Was previously SCREEN_WIDTH - rank_img.get_width() - 60
+            rank_y = 50 # Was previously SCREEN_HEIGHT / 2 - rank_img.get_height() / 2
             self.display.blit(rank_img, (rank_x, rank_y))
 
             rank_label_surf = self.rank_font.render(rank, True, (255,255,255))
@@ -1691,7 +1546,7 @@ class LevelResultScreen:
             rank_label_y = rank_y + rank_img.get_height() + 80
             self.display.blit(rank_label_surf, (rank_label_x, rank_label_y))
 
-            if self.level_ref.level_key == "level1":
+            if self.level_ref.level_key == "level1": # Unique character images drawn for each level completed
                 draw_boss(self.display, "level1", 20, 250, 0.35)
             elif self.level_ref.level_key == "level2":
                 draw_boss(self.display, "level2", -15, 280, 0.33)
@@ -1717,15 +1572,7 @@ class LevelResultScreen:
             opt_y = 500 + i * 40
             self.display.blit(opt_surf, (opt_x, opt_y))
 
-class Menu:
-    def __init__(self, display, gameStateManager):
-        self.display = display
-        self.gameStateManager = gameStateManager
-
-    def run(self, dt):
-        self.display.blit(cover_img, (0, 0))
-
-class Game:
+class Game: # The master class with logic that runs everything
     def __init__(self):
         self.screen = py.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = py.time.Clock()
@@ -1762,7 +1609,6 @@ class Game:
             rank_thresholds=rank_thresholds_2,
             level_key="level2", stats_manager=self.stats_manager)
 
-        self.splash = Splash(self.screen, self.gameStateManager)
         self.main_menu = MainMenu(self.screen, self.gameStateManager)
         self.manual = Manual(self.screen, self.gameStateManager)
         self.level_select = LevelSelect(self.screen, self.gameStateManager, self.level1, self.stats_manager, self.level_keys, self.playable_level_keys)
@@ -1774,7 +1620,6 @@ class Game:
         self.level2_lose = LevelResultScreen(self.screen, self.gameStateManager, self.level2, "GAME OVER", "assets/audio/level_lose.ogg", background_img=lose_level_bg_img, level_key="level2", stats_manager=self.stats_manager)
 
         self.states = {
-            'splash': self.splash,
             'main_menu': self.main_menu,
             'manual': self.manual,
             'level_select': self.level_select,
@@ -1793,7 +1638,7 @@ class Game:
         global previous_time
         flag = True
         while flag:
-            dt = time.time() - previous_time
+            dt = time.time() - previous_time # Delta time ensures same movement speed on different frame rates
             previous_time = time.time()
 
             events = py.event.get()
@@ -1816,8 +1661,10 @@ class Game:
 
             self.gameStateManager.draw_transition(self.screen, dt)
 
-            py.display.flip()
+            py.display.flip() # Finally, update the display
 
 if __name__ == '__main__':
     game = Game()
     game.run()
+
+# DANGAN by juroimoh (with some help from Gemini and lots from Claude)
