@@ -1,4 +1,4 @@
-> this game is a work in progress
+> this page is a work in progress
 
 # Dangan (弾丸)
 
