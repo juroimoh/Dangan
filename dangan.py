@@ -26,6 +26,7 @@ spinningblade_img = py.image.load("assets/entities/blade.png").convert_alpha()
 spinningblade_gray_img = py.transform.grayscale(spinningblade_img)
 spinningblade_red_img = spinningblade_img.copy()
 spinningblade_red_img.fill((255, 60, 60, 255), special_flags=py.BLEND_RGBA_MULT)
+flash_img = py.image.load("assets/entities/flash.png").convert_alpha()
 fullheart_img = py.image.load("assets/entities/full_heart.png").convert_alpha()
 halfheart_img = py.image.load("assets/entities/half_heart.png").convert_alpha()
 haku_img = py.image.load("assets/entities/haku.png").convert_alpha()
@@ -98,6 +99,11 @@ HIT_FADE_WINDOW = 0.4
 SURVIVAL_SCORE_RATE = 40.0
 SURVIVAL_SCORE_DOUBLE_TIME = 12 # 15 originally
 SPINNING_BLADE_INACTIVE_ALPHA = 45
+
+HIT_FLASH_DURATION = 0.5
+HIT_FLASH_START_SCALE = 0.25
+HIT_FLASH_END_SCALE = 1.5
+
 PLAYER_MAX_HEALTH = 8
 DAMAGE_PENALTY_PER_HIT = 1000
 
@@ -777,7 +783,13 @@ class Level:
         rotated_rect = rotated_image.get_rect(center=rotated_center)
         return rotated_image, rotated_rect
 
-    def take_damage(self):
+    def take_damage(self, hit_x=None, hit_y=None):
+        if hit_x is None:
+            hit_x = self.player.x + self.player_width / 2
+        if hit_y is None:
+            hit_y = self.player.y + self.player_width / 2
+        self.hit_flashes.append({"x": float(hit_x), "y": float(hit_y), "elapsed": 0.0})
+
         self.hit_timer = HIT_TIMEOUT_DURATION
         self.survival_timer = 0.0
         self.health = max(0, self.health - 1)
@@ -1024,6 +1036,7 @@ class Level:
         self.enemy_bullets = []
         self.active_spawners = []
         self.spinning_blades = []
+        self.hit_flashes = []
 
         self.enemy_movement_mode = "idle"
         self.enemy_move_elapsed = 0.0
@@ -1354,7 +1367,7 @@ class Level:
 
             if self.hit_timer <= 0:
                 if self.player_mask.overlap(b_mask, (offset_x, offset_y)):
-                    self.take_damage()
+                    self.take_damage(b["x"], b["y"])
                 else:
                     graze_x = int(b["x"] - b["width"] / 2 - (self.player.x + self.player_width / 2 - self.graze_radius))
                     graze_y = int(b["y"] - b["height"] / 2 - (self.player.y + self.player_width / 2 - self.graze_radius))
@@ -1377,6 +1390,20 @@ class Level:
                 screen.blit(b["image"], (b["x"] - b["width"] / 2, b["y"] - b["height"] / 2))
             else:
                 py.draw.circle(screen, b["color"], (int(b["x"]), int(b["y"])), b["radius"])
+
+        for flash in self.hit_flashes[:]:
+            flash["elapsed"] += dt
+            t = flash["elapsed"] / HIT_FLASH_DURATION
+            if t >= 1.0:
+                self.hit_flashes.remove(flash)
+                continue
+
+            scale = HIT_FLASH_START_SCALE + (HIT_FLASH_END_SCALE - HIT_FLASH_START_SCALE) * t
+            scaled_w = max(1, int(flash_img.get_width() * scale))
+            scaled_h = max(1, int(flash_img.get_height() * scale))
+            scaled_flash = py.transform.smoothscale(flash_img, (scaled_w, scaled_h))
+            scaled_flash.set_alpha(int(255 * (1.0 - t)))
+            screen.blit(scaled_flash, (flash["x"] - scaled_w / 2, flash["y"] - scaled_h / 2))
 
         self.draw_enemy()
         self.draw_player_bullets()
