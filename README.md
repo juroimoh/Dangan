@@ -1,4 +1,4 @@
-> this page is a work in progress
+> this game is a work in progress
 
 # Dangan (弾丸)
 
@@ -9,7 +9,7 @@ Dodge their attacks, fire shots back, and achieve the highest ranks on all level
 
 ## Controls
 
-- `↑ ← ↓ →` | Movement and Navigate (alternatively use `WASD`)
+- `↑ ← ↓ →` | Movement and Navigate (alternatively use `WASD`)  
 - `SPACE` | Shoot and Select  
 - `ESC` | Exit Level/Screen  
 
