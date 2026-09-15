@@ -60,7 +60,7 @@ You take damage by colliding with the enemy, spinning blades, and bullets. This 
 By narrowly avoiding bullets, you receive bonus points. This can heavily increase your final score. Your graze value is rounded down to the nearest hundredth, and then multiplied by 10, so with a value of 3670 you would get a bonus graze score of 36,000.
 
 **Lore**  
-Currently there are two levels, with 3 being planned. You are trying to restore peace by defeating the princesses Sheru (level 1), Kiero (level 2) and ___ (level 3). You cannot 'win' Dangan yet, since not all levels have been made, but a rank of HAKU is considered defeating the princess.
+Currently there are two levels, with 3 being planned. You are trying to restore peace by defeating the princesses Sheru (_level 1_), Kiero (_level 2_) and ??? (_level 3_). You cannot 'win' Dangan yet, since not all levels have been made, but a rank of HAKU is considered defeating the princess.
 
 ## Project Files
 
